@@ -18,7 +18,14 @@
         radial-gradient(circle at 20% 0,rgba(255,165,190,.18),transparent 28%),
         linear-gradient(#fffdfd,#fff7fa);overflow-x:hidden
     }
-    button{font:inherit}
+    button{
+      font:inherit;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      cursor:pointer;
+      user-select:none;
+    }
+    button:disabled{opacity:.65;cursor:not-allowed}
     .app{width:min(100%,760px);margin:auto;padding:18px 15px 120px}
     .top{display:flex;justify-content:space-between;align-items:center}
     .square{
@@ -44,7 +51,7 @@
       left:-9999px;
       top:-9999px;
     }
-    #view,#overlay{position:absolute;inset:0;width:100%;height:100%}
+    #view,#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     #view{object-fit:cover;background:linear-gradient(135deg,#ffd7e2,#efb7c4)}
     #overlay{pointer-events:none;z-index:3}
     .camera-actions{position:absolute;z-index:5;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between}
@@ -53,8 +60,18 @@
       display:grid;place-items:center;font-weight:900;font-size:17px
     }
     .permission{
-      position:absolute;inset:0;z-index:10;display:grid;place-items:center;text-align:center;padding:25px;
-      background:rgba(255,247,250,.91);backdrop-filter:blur(10px)
+      position:absolute;inset:0;z-index:50;display:grid;place-items:center;text-align:center;padding:25px;
+      background:rgba(255,247,250,.94);backdrop-filter:blur(10px);
+      pointer-events:auto;
+    }
+    .permission>div{position:relative;z-index:52;pointer-events:auto}
+    #start{
+      position:relative;
+      z-index:60;
+      pointer-events:auto;
+      touch-action:manipulation;
+      min-width:170px;
+      min-height:52px;
     }
     .permission.hide{display:none}.permission h2{margin:0 0 8px}.permission p{line-height:1.45;color:#625b61}
     .primary{
@@ -135,7 +152,7 @@
 </head>
 <body>
   <main class="app">
-    <header class="top"><button class="square">☰</button><button class="square">♕</button></header>
+    <header class="top"><button class="square" type="button">☰</button><button class="square" type="button">♕</button></header>
     <div class="brand">
       <strong class="pink">♡ KOREAN</strong><strong>PHOTOBOOTH</strong>
       <span class="tag">Capture your mood ♥</span>
@@ -146,12 +163,12 @@
       <canvas id="view"></canvas><canvas id="overlay"></canvas>
       <div class="countdown" id="countdown">3</div>
       <div class="camera-actions">
-        <button class="circle" id="zoom">1×</button><button class="circle" id="switch">↻</button>
+        <button class="circle" id="zoom" type="button">1×</button><button class="circle" id="switch" type="button">↻</button>
       </div>
       <div class="permission" id="permission">
         <div><h2>Aktifkan Kamera</h2>
           <p id="permissionText">Tekan tombol berikut lalu izinkan akses kamera.</p>
-          <button class="primary" id="start">Buka Kamera</button>
+          <button class="primary" id="start" type="button" aria-label="Buka kamera">Buka Kamera</button>
         </div>
       </div>
     </section>
@@ -190,9 +207,9 @@
     </section>
 
     <div class="controls">
-      <button class="pill" id="galleryBtn">▧ Galeri</button>
-      <button class="capture" id="capture">📷</button>
-      <button class="pill" id="timer">⏱ Timer</button>
+      <button class="pill" id="galleryBtn" type="button">▧ Galeri</button>
+      <button class="capture" id="capture" type="button">📷</button>
+      <button class="pill" id="timer" type="button">⏱ Timer</button>
     </div>
     <div class="status info" id="status"></div>
     <section class="gallery" id="gallery"></section>
@@ -214,7 +231,7 @@
   const WEB_APP_URL =https://script.google.com/macros/s/AKfycbzPYeGCdLj1_EyEHrnlMR1VJyN2yvtqoLCY82SkZ0SR7TPPIokXYUyxBbvLnHHmptXZ/exec;
 
   const video=document.querySelector('#video'),view=document.querySelector('#view'),ctx=view.getContext('2d',{alpha:false});
-  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('#homeSection');
+  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('.camera');
   const permission=document.querySelector('#permission'),permissionText=document.querySelector('#permissionText');
   const statusBox=document.querySelector('#status'),gallery=document.querySelector('#gallery'),countdown=document.querySelector('#countdown');
 
@@ -237,16 +254,50 @@
     overlay.width=view.width;overlay.height=view.height;drawFrame(ox,overlay.width,overlay.height,frame);
   }
 
-  async function startCamera(){
-    if(!navigator.mediaDevices?.getUserMedia){
-      permissionText.textContent='Browser tidak mendukung kamera.';return;
+  let cameraStarting=false,lastCameraTap=0;
+
+  async function startCamera(event){
+    if(event){event.preventDefault();event.stopPropagation()}
+    const now=Date.now();
+    if(now-lastCameraTap<350 || cameraStarting)return;
+    lastCameraTap=now;
+    cameraStarting=true;
+
+    const startBtn=document.querySelector('#start');
+    const oldText=startBtn.textContent;
+    startBtn.disabled=true;
+    startBtn.textContent='Membuka...';
+    permissionText.textContent='Meminta izin kamera dari browser...';
+
+    if(!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia!=='function'){
+      permissionText.textContent='Browser tidak mendukung kamera. Gunakan Chrome atau Safari terbaru.';
+      startBtn.disabled=false;startBtn.textContent=oldText;cameraStarting=false;return;
     }
     if(!isSecureContext && location.hostname!=='localhost'){
       permissionText.textContent='Kamera hanya dapat digunakan melalui HTTPS.';return;
     }
     try{
       if(stream)stream.getTracks().forEach(t=>t.stop());
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}},audio:false});
+
+      let constraints={
+        video:{
+          facingMode:{ideal:facing},
+          width:{ideal:1280},
+          height:{ideal:960}
+        },
+        audio:false
+      };
+
+      try{
+        stream=await navigator.mediaDevices.getUserMedia(constraints);
+      }catch(firstError){
+        // Fallback untuk perangkat yang tidak mendukung facingMode/ukuran ideal.
+        if(firstError.name==='OverconstrainedError' || firstError.name==='NotFoundError'){
+          stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+        }else{
+          throw firstError;
+        }
+      }
       video.srcObject=stream;
 
       await new Promise((resolve,reject)=>{
@@ -270,11 +321,25 @@
 
       // Paksa gambar frame pertama agar hasil foto tidak hitam.
       await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      setStatus('Kamera berhasil diaktifkan.','success');
     }catch(e){
+      console.error('Camera error:',e);
       permission.classList.remove('hide');
-      permissionText.textContent=e.name==='NotAllowedError'
-        ?'Izin kamera ditolak. Izinkan kamera melalui pengaturan browser.'
-        :'Kamera gagal dibuka. Pastikan tidak digunakan aplikasi lain.';
+
+      if(e.name==='NotAllowedError' || e.name==='PermissionDeniedError'){
+        permissionText.textContent='Izin kamera ditolak. Tekan ikon pengaturan di samping alamat website, pilih Kamera → Izinkan, lalu muat ulang halaman.';
+      }else if(e.name==='NotFoundError' || e.name==='DevicesNotFoundError'){
+        permissionText.textContent='Kamera tidak ditemukan pada perangkat ini.';
+      }else if(e.name==='NotReadableError' || e.name==='TrackStartError'){
+        permissionText.textContent='Kamera sedang dipakai aplikasi lain. Tutup aplikasi kamera/WhatsApp lalu coba lagi.';
+      }else{
+        permissionText.textContent='Kamera gagal dibuka: '+(e.message||e.name||'Kesalahan tidak diketahui');
+      }
+      setStatus(permissionText.textContent,'error');
+    }finally{
+      startBtn.disabled=false;
+      startBtn.textContent=oldText;
+      cameraStarting=false;
     }
   }
 
@@ -431,7 +496,15 @@
   select('#effects','[data-effect]','effect',v=>effect=v);
   select('#frames','[data-frame]','frame',v=>{frame=v;drawFrame(ox,overlay.width,overlay.height,frame)});
 
-  document.querySelector('#start').onclick=startCamera;
+  const startCameraButton=document.querySelector('#start');
+  startCameraButton.addEventListener('click',startCamera);
+  startCameraButton.addEventListener('pointerup',e=>{
+    if(e.pointerType==='touch'){
+      e.preventDefault();
+      startCamera(e);
+    }
+  });
+
   document.querySelector('#switch').onclick=()=>{facing=facing==='user'?'environment':'user';startCamera()};
   document.querySelector('#zoom').onclick=e=>{zoom=zoom===1?1.5:zoom===1.5?2:1;e.currentTarget.textContent=zoom+'×'};
   document.querySelector('#capture').onclick=capture;
