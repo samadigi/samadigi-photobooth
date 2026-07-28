@@ -1,716 +1,355 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#fff7fa" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#fff7fa">
   <title>Korean Photobooth</title>
-
   <style>
     :root{
-      --pink:#ff7da5;
-      --pink-2:#ff9fbb;
-      --pink-soft:#ffe5ee;
-      --ink:#222;
-      --muted:#777;
-      --card:#fff;
-      --shadow:0 16px 45px rgba(255,125,165,.18);
-      --radius:28px;
+      --pink:#ff7da5;--pink2:#ffabc2;--soft:#fff1f5;--text:#262326;
+      --muted:#777077;--line:#ecdde3;--card:#fff;--shadow:0 16px 42px rgba(136,51,83,.13)
     }
-
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth;background:#fff9fb}
+    html{background:#fff8fb;scroll-behavior:smooth}
     body{
-      margin:0;
-      min-height:100dvh;
-      font-family:Inter,ui-rounded,"Nunito","Segoe UI",Arial,sans-serif;
-      color:var(--ink);
+      margin:0;color:var(--text);font-family:Inter,ui-rounded,"Segoe UI",Arial,sans-serif;
       background:
-        radial-gradient(circle at 20% 0%,rgba(255,171,195,.15),transparent 28%),
-        radial-gradient(circle at 90% 20%,rgba(255,211,224,.22),transparent 32%),
-        linear-gradient(180deg,#fffdfd 0%,#fff7fa 100%);
-      overflow-x:hidden;
+        radial-gradient(circle at 20% 0,rgba(255,165,190,.18),transparent 28%),
+        linear-gradient(#fffdfd,#fff7fa);overflow-x:hidden
     }
-
     button{font:inherit}
-    .app{
-      width:min(100%,760px);
-      margin:0 auto;
-      padding:18px 18px calc(120px + env(safe-area-inset-bottom));
+    .app{width:min(100%,760px);margin:auto;padding:18px 15px 120px}
+    .top{display:flex;justify-content:space-between;align-items:center}
+    .square{
+      width:48px;height:48px;border:1px solid var(--line);border-radius:16px;background:#fff;
+      display:grid;place-items:center;font-size:24px;box-shadow:0 7px 20px rgba(0,0,0,.05)
     }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:8px;
+    .brand{text-align:center;margin:8px 0 20px;line-height:.92}
+    .brand strong{display:block;font-size:clamp(37px,10vw,65px);font-weight:1000;letter-spacing:-2px}
+    .brand .pink{color:var(--pink)} .tag{
+      display:inline-block;margin-top:12px;padding:7px 21px;border-radius:999px;color:#fff;
+      background:linear-gradient(90deg,var(--pink),#ffb0c6);font-weight:800
     }
-
-    .icon-btn{
-      width:48px;height:48px;border-radius:16px;border:1px solid #eadde2;
-      background:rgba(255,255,255,.9);box-shadow:0 8px 22px rgba(0,0,0,.05);
-      display:grid;place-items:center;cursor:pointer;
+    .camera{
+      position:relative;aspect-ratio:4/3;border-radius:30px;overflow:hidden;background:#f4c4d0;
+      box-shadow:var(--shadow);isolation:isolate
     }
-    .hamburger{font-size:25px}
-    .crown{font-size:24px}
-
-    .brand{
-      text-align:center;
-      margin:2px 0 20px;
-      line-height:.9;
-      user-select:none;
+    video{display:none}
+    #view,#overlay{position:absolute;inset:0;width:100%;height:100%}
+    #view{object-fit:cover;background:linear-gradient(135deg,#ffd7e2,#efb7c4)}
+    #overlay{pointer-events:none;z-index:3}
+    .camera-actions{position:absolute;z-index:5;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between}
+    .circle{
+      width:54px;height:54px;border:0;border-radius:50%;color:#fff;background:rgba(25,25,25,.7);
+      display:grid;place-items:center;font-weight:900;font-size:17px
     }
-    .brand .korean{
-      display:block;
-      font-weight:1000;
-      font-size:clamp(36px,10vw,64px);
-      color:var(--pink);
-      letter-spacing:-2px;
-      text-shadow:0 5px 0 rgba(255,174,197,.25);
+    .permission{
+      position:absolute;inset:0;z-index:10;display:grid;place-items:center;text-align:center;padding:25px;
+      background:rgba(255,247,250,.91);backdrop-filter:blur(10px)
     }
-    .brand .photo{
-      display:block;
-      font-weight:1000;
-      font-size:clamp(34px,9vw,60px);
-      color:#343434;
-      letter-spacing:-2px;
-    }
-    .brand .tag{
-      display:inline-block;
-      margin-top:13px;
-      padding:7px 22px;
-      border-radius:999px;
-      color:#fff;
-      background:linear-gradient(90deg,var(--pink-2),#ffb5ca);
-      font-weight:800;
-      font-size:14px;
-    }
-
-    .camera-card{
-      position:relative;
-      overflow:hidden;
-      border-radius:32px;
-      aspect-ratio:4/3;
-      background:#f6c9d2;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(255,255,255,.8);
-      isolation:isolate;
-    }
-
-    #video{display:none}
-    #preview{
-      width:100%;height:100%;display:block;object-fit:cover;
-      transform:scaleX(-1);
-      background:linear-gradient(135deg,#ffd9e3,#f8c0cc);
-    }
-    .camera-card.back-camera #preview{transform:none}
-
-    .frame-overlay{
-      position:absolute;inset:0;pointer-events:none;z-index:3;
-      border-radius:inherit;
-    }
-
-    .preview-actions{
-      position:absolute;left:14px;right:14px;bottom:14px;
-      z-index:5;display:flex;justify-content:space-between;align-items:center;
-    }
-    .round-dark{
-      width:54px;height:54px;border:0;border-radius:50%;
-      color:#fff;background:rgba(28,28,28,.72);
-      backdrop-filter:blur(10px);
-      display:grid;place-items:center;font-weight:800;font-size:17px;cursor:pointer;
-      box-shadow:0 7px 22px rgba(0,0,0,.16);
-    }
-
-    .camera-message{
-      position:absolute;inset:0;z-index:6;display:grid;place-items:center;
-      padding:28px;text-align:center;background:rgba(255,244,248,.88);
-      backdrop-filter:blur(10px);
-    }
-    .camera-message.hidden{display:none}
-    .camera-message-inner{max-width:420px}
-    .camera-message h2{margin:0 0 8px;font-size:22px}
-    .camera-message p{margin:0 0 16px;color:#5f5960;line-height:1.5}
+    .permission.hide{display:none}.permission h2{margin:0 0 8px}.permission p{line-height:1.45;color:#625b61}
     .primary{
-      border:0;border-radius:999px;padding:13px 22px;background:var(--pink);
-      color:#fff;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(255,125,165,.3)
+      border:0;border-radius:999px;background:var(--pink);color:#fff;padding:13px 21px;
+      font-weight:900;box-shadow:0 9px 24px rgba(255,125,165,.3)
     }
-
-    .section{margin-top:28px}
-    .section-title{
-      display:flex;align-items:center;gap:9px;
-      font-size:22px;font-weight:950;margin:0 0 14px;
+    .section{margin-top:27px}.title{font-size:21px;font-weight:950;margin:0 0 13px}
+    .title:before{content:"♥";color:var(--pink);font-size:14px;margin-right:8px}
+    .scroll{display:flex;gap:12px;overflow:auto;padding:3px 2px 8px;scrollbar-width:none}
+    .scroll::-webkit-scrollbar{display:none}
+    .option{border:0;background:transparent;padding:0;flex:0 0 91px;text-align:center}
+    .thumb{
+      height:91px;border-radius:18px;background:linear-gradient(135deg,#5b3d45 0 35%,#f1c8d2 36% 65%,#fff 66%);
+      border:3px solid transparent;box-shadow:0 7px 17px rgba(0,0,0,.06);display:grid;place-items:center;
+      font-size:33px;overflow:hidden
     }
-    .section-title::before{content:"♥";color:var(--pink);font-size:15px}
-
-    .scroller{
-      display:flex;gap:13px;overflow:auto;padding:2px 2px 8px;
-      scroll-snap-type:x proximity;scrollbar-width:none;
+    .option.active .thumb{border-color:var(--pink);transform:translateY(-2px)}
+    .label{display:block;margin-top:7px;font-size:14px;font-weight:750}
+    .frame-pink{background:#fff;border:8px double #ff9bb8}.frame-flower{background:#fff;border:8px solid #c9e7bf}
+    .frame-cat{background:#fff;border:8px solid #ccb9eb}.frame-dark{background:#fff;border:10px solid #151515}
+    .frame-film{background:#fff;border:10px dotted #161616}.frame-none{background:#fff}
+    .effects{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .effect{
+      min-height:92px;border:1px solid var(--line);border-radius:17px;background:#fff;display:grid;
+      place-items:center;align-content:center;gap:7px;font-weight:750
     }
-    .scroller::-webkit-scrollbar{display:none}
-
-    .choice{
-      flex:0 0 auto;min-width:96px;cursor:pointer;text-align:center;
-      border:0;background:transparent;padding:0;color:inherit;
+    .effect span{font-size:26px}.effect.active{border:2px solid var(--pink);background:#fff8fb}
+    .controls{display:grid;grid-template-columns:1fr auto 1fr;gap:13px;align-items:center;margin:28px 0 12px}
+    .pill{
+      min-width:0;border:1px solid var(--line);background:#fff;border-radius:999px;padding:13px 8px;
+      font-weight:850;box-shadow:0 7px 18px rgba(0,0,0,.04)
     }
-    .choice-thumb{
-      width:96px;height:96px;border-radius:18px;overflow:hidden;
-      background:#f3e5e8;border:3px solid transparent;
-      display:grid;place-items:center;transition:.2s ease;
-      box-shadow:0 7px 18px rgba(0,0,0,.06);
+    .capture{
+      width:100px;height:100px;border-radius:50%;border:8px solid #ffd1df;
+      background:linear-gradient(145deg,#ff9dbc,#ff719d);color:#fff;font-size:35px;
+      box-shadow:0 12px 26px rgba(255,125,165,.28)
     }
-    .choice.active .choice-thumb{border-color:var(--pink);transform:translateY(-2px)}
-    .choice-thumb img{width:100%;height:100%;object-fit:cover}
-    .choice-label{font-size:14px;margin-top:7px;font-weight:700}
-
-    .filter-preview{
-      width:100%;height:100%;background:
-        radial-gradient(circle at 50% 25%,#f7d5dc 0 16%,transparent 17%),
-        linear-gradient(135deg,#5f3d3d 0 30%,#f0cbd2 31% 55%,#fefefe 56%);
-      position:relative;
+    .status{
+      display:none;margin:15px 0 0;padding:12px 14px;border-radius:15px;font-weight:750;line-height:1.4
     }
-    .filter-preview::after{
-      content:"♡";position:absolute;right:9px;top:6px;color:#fff;font-size:20px
-    }
-
-    .frame-thumb{
-      width:100%;height:100%;position:relative;background:#fff;
-    }
-    .frame-thumb::after{position:absolute;inset:9px;border-radius:10px;content:""}
-    .frame-none{background:linear-gradient(135deg,#fff,#fff6f8)}
-    .frame-pink::after{border:5px double #ff9ab7;box-shadow:inset 0 -18px #ffe4ec}
-    .frame-flower::after{border:5px solid #cde6c7}
-    .frame-cat::after{border:5px solid #c7b5eb}
-    .frame-dark::after{border:7px solid #191919;box-shadow:inset 0 0 0 3px #ff8eb1}
-    .frame-film::after{border:8px dotted #111}
-
-    .effects-grid{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-    }
-    .effect-btn{
-      min-height:96px;border:1px solid #eee0e5;border-radius:17px;background:#fff;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-      cursor:pointer;box-shadow:0 7px 18px rgba(0,0,0,.035);font-weight:750;
-      transition:.2s ease;
-    }
-    .effect-btn.active{border:2px solid var(--pink);background:#fff9fb;transform:translateY(-2px)}
-    .effect-icon{font-size:27px}
-
-    .controls{
-      margin:28px 0 8px;
-      display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;
-    }
-    .pill-btn{
-      min-width:0;border:1px solid #e6d9de;border-radius:999px;background:#fff;
-      padding:13px 14px;font-weight:800;display:flex;gap:9px;align-items:center;justify-content:center;
-      cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.045)
-    }
-    .capture-btn{
-      width:104px;height:104px;border-radius:50%;border:8px solid #ffd2df;
-      background:linear-gradient(145deg,#ff9dbc,#ff759f);color:#fff;font-size:36px;
-      display:grid;place-items:center;cursor:pointer;box-shadow:0 12px 28px rgba(255,125,165,.28);
-      transition:.15s ease;
-    }
-    .capture-btn:active{transform:scale(.94)}
-
-    .gallery{
-      display:none;margin-top:24px;
-      grid-template-columns:repeat(2,1fr);gap:12px;
-    }
-    .gallery.show{display:grid}
-    .photo-card{
-      border-radius:18px;overflow:hidden;background:#fff;padding:7px;
-      box-shadow:0 8px 22px rgba(0,0,0,.08);
-    }
-    .photo-card img{display:block;width:100%;border-radius:13px}
-    .photo-card-actions{display:flex;gap:8px;margin-top:7px}
-    .small-btn{
-      flex:1;border:0;border-radius:12px;padding:9px;background:#fff0f5;
-      color:#b02e59;font-weight:800;cursor:pointer
-    }
-
-    .bottom-nav{
-      position:fixed;z-index:20;left:50%;bottom:max(12px,env(safe-area-inset-bottom));
-      transform:translateX(-50%);
-      width:min(calc(100% - 24px),720px);
-      display:grid;grid-template-columns:repeat(5,1fr);
-      border:1px solid rgba(235,220,226,.8);
-      background:rgba(255,255,255,.89);
-      backdrop-filter:blur(18px);
-      border-radius:28px;padding:12px 6px;
-      box-shadow:0 15px 45px rgba(69,22,39,.11);
-    }
-    .nav-item{border:0;background:transparent;color:#848084;display:grid;gap:4px;place-items:center;font-size:12px}
-    .nav-item.active{color:var(--pink);font-weight:900}
-    .nav-icon{font-size:22px}
-
-    .toast{
-      position:fixed;left:50%;bottom:120px;transform:translate(-50%,20px);
-      opacity:0;pointer-events:none;z-index:99;
-      background:#252126;color:#fff;border-radius:999px;padding:11px 18px;
-      font-size:14px;font-weight:750;transition:.25s ease;white-space:nowrap;
-    }
-    .toast.show{opacity:1;transform:translate(-50%,0)}
-
-    .countdown{
-      position:absolute;inset:0;z-index:15;display:none;place-items:center;
-      background:rgba(0,0,0,.18);color:#fff;font-size:100px;font-weight:1000;
-      text-shadow:0 8px 28px rgba(0,0,0,.28)
-    }
+    .status.show{display:block}.status.info{background:#fff0f5;color:#9d3156}
+    .status.success{background:#eaf9ef;color:#24733d}.status.error{background:#fff0f0;color:#a42b2b}
+    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px}
+    .photo{background:#fff;padding:7px;border-radius:17px;box-shadow:0 8px 20px rgba(0,0,0,.07)}
+    .photo img{width:100%;display:block;border-radius:12px}
+    .photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+    .small{border:0;border-radius:11px;background:#fff0f5;color:#a43259;padding:9px 5px;font-weight:850}
+    .small.uploaded{background:#eaf9ef;color:#24733d}
+    .countdown{position:absolute;inset:0;z-index:15;display:none;place-items:center;background:rgba(0,0,0,.2);color:#fff;font-size:95px;font-weight:1000}
     .countdown.show{display:grid}
-
-    @media (min-width:700px){
-      .app{padding-top:28px}
-      .effects-grid{grid-template-columns:repeat(6,1fr)}
+    .bottom{
+      position:fixed;z-index:30;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);
+      width:min(calc(100% - 24px),720px);display:grid;grid-template-columns:repeat(5,1fr);
+      background:rgba(255,255,255,.9);backdrop-filter:blur(17px);border:1px solid var(--line);
+      border-radius:27px;padding:12px 5px;box-shadow:0 14px 40px rgba(70,26,43,.12)
     }
-    @media (max-width:430px){
-      .app{padding-left:12px;padding-right:12px}
-      .camera-card{border-radius:25px}
-      .choice{min-width:82px}.choice-thumb{width:82px;height:82px}
-      .section-title{font-size:19px}
-      .effect-btn{min-height:86px;font-size:13px}
-      .capture-btn{width:90px;height:90px}
-      .pill-btn{font-size:13px;padding:11px 8px}
-    }
+    .nav{border:0;background:transparent;color:#898389;font-size:12px}.nav b{display:block;font-size:22px;margin-bottom:3px}
+    .nav.active{color:var(--pink);font-weight:900}
+    @media(min-width:690px){.effects{grid-template-columns:repeat(6,1fr)}}
+    @media(max-width:420px){.app{padding-left:11px;padding-right:11px}.option{flex-basis:81px}.thumb{height:81px}.effect{font-size:13px}.capture{width:88px;height:88px}.pill{font-size:13px}}
   </style>
 </head>
 <body>
   <main class="app">
-    <header class="topbar">
-      <button class="icon-btn hamburger" aria-label="Menu">☰</button>
-      <button class="icon-btn crown" aria-label="Premium">♕</button>
-    </header>
-
-    <section class="brand" aria-label="Korean Photobooth">
-      <span class="korean">♡ KOREAN</span>
-      <span class="photo">PHOTOBOOTH</span>
+    <header class="top"><button class="square">☰</button><button class="square">♕</button></header>
+    <div class="brand">
+      <strong class="pink">♡ KOREAN</strong><strong>PHOTOBOOTH</strong>
       <span class="tag">Capture your mood ♥</span>
-    </section>
+    </div>
 
-    <section class="camera-card" id="cameraCard">
+    <section class="camera" id="camera">
       <video id="video" autoplay playsinline muted></video>
-      <canvas id="preview"></canvas>
-      <canvas id="frameOverlay" class="frame-overlay"></canvas>
+      <canvas id="view"></canvas><canvas id="overlay"></canvas>
       <div class="countdown" id="countdown">3</div>
-
-      <div class="preview-actions">
-        <button class="round-dark" id="zoomBtn" aria-label="Zoom">1×</button>
-        <button class="round-dark" id="switchBtn" aria-label="Ganti kamera">↻</button>
+      <div class="camera-actions">
+        <button class="circle" id="zoom">1×</button><button class="circle" id="switch">↻</button>
       </div>
-
-      <div class="camera-message" id="cameraMessage">
-        <div class="camera-message-inner">
-          <h2>Aktifkan Kamera</h2>
-          <p id="cameraText">Tekan tombol di bawah, lalu izinkan akses kamera pada browser.</p>
-          <button class="primary" id="startCamera">Buka Kamera</button>
+      <div class="permission" id="permission">
+        <div><h2>Aktifkan Kamera</h2>
+          <p id="permissionText">Tekan tombol berikut lalu izinkan akses kamera.</p>
+          <button class="primary" id="start">Buka Kamera</button>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">Pilih Filter</h2>
-      <div class="scroller" id="filterList">
-        <button class="choice active" data-filter="original">
-          <span class="choice-thumb"><span class="filter-preview"></span></span><span class="choice-label">Original</span>
-        </button>
-        <button class="choice" data-filter="soft">
-          <span class="choice-thumb" style="filter:brightness(1.06) saturate(.9) blur(.2px)"><span class="filter-preview"></span></span><span class="choice-label">Soft</span>
-        </button>
-        <button class="choice" data-filter="clean">
-          <span class="choice-thumb" style="filter:brightness(1.12) contrast(.93) saturate(.85)"><span class="filter-preview"></span></span><span class="choice-label">Clean</span>
-        </button>
-        <button class="choice" data-filter="warm">
-          <span class="choice-thumb" style="filter:sepia(.15) saturate(1.15) brightness(1.03)"><span class="filter-preview"></span></span><span class="choice-label">Warm</span>
-        </button>
-        <button class="choice" data-filter="bright">
-          <span class="choice-thumb" style="filter:brightness(1.18) contrast(1.05)"><span class="filter-preview"></span></span><span class="choice-label">Bright</span>
-        </button>
-        <button class="choice" data-filter="cream">
-          <span class="choice-thumb" style="filter:sepia(.12) brightness(1.08) contrast(.92)"><span class="filter-preview"></span></span><span class="choice-label">Cream</span>
-        </button>
+    <section class="section"><h2 class="title">Pilih Filter</h2>
+      <div class="scroll" id="filters">
+        <button class="option active" data-filter="original"><span class="thumb">♡</span><span class="label">Original</span></button>
+        <button class="option" data-filter="soft"><span class="thumb" style="filter:brightness(1.08) saturate(.85)">♡</span><span class="label">Soft</span></button>
+        <button class="option" data-filter="clean"><span class="thumb" style="filter:brightness(1.15) contrast(.9)">♡</span><span class="label">Clean</span></button>
+        <button class="option" data-filter="warm"><span class="thumb" style="filter:sepia(.25) saturate(1.2)">♡</span><span class="label">Warm</span></button>
+        <button class="option" data-filter="bright"><span class="thumb" style="filter:brightness(1.2)">♡</span><span class="label">Bright</span></button>
+        <button class="option" data-filter="cream"><span class="thumb" style="filter:sepia(.15) brightness(1.1)">♡</span><span class="label">Cream</span></button>
       </div>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">Pilih Frame</h2>
-      <div class="scroller" id="frameList">
-        <button class="choice active" data-frame="pink">
-          <span class="choice-thumb"><span class="frame-thumb frame-pink"></span></span><span class="choice-label">Pink</span>
-        </button>
-        <button class="choice" data-frame="flower">
-          <span class="choice-thumb"><span class="frame-thumb frame-flower"></span></span><span class="choice-label">Flower</span>
-        </button>
-        <button class="choice" data-frame="cat">
-          <span class="choice-thumb"><span class="frame-thumb frame-cat"></span></span><span class="choice-label">Cute Cat</span>
-        </button>
-        <button class="choice" data-frame="dark">
-          <span class="choice-thumb"><span class="frame-thumb frame-dark"></span></span><span class="choice-label">Black Love</span>
-        </button>
-        <button class="choice" data-frame="film">
-          <span class="choice-thumb"><span class="frame-thumb frame-film"></span></span><span class="choice-label">Film</span>
-        </button>
-        <button class="choice" data-frame="none">
-          <span class="choice-thumb"><span class="frame-thumb frame-none"></span></span><span class="choice-label">Tanpa Frame</span>
-        </button>
+    <section class="section"><h2 class="title">Pilih Frame</h2>
+      <div class="scroll" id="frames">
+        <button class="option active" data-frame="pink"><span class="thumb frame-pink"></span><span class="label">Pink</span></button>
+        <button class="option" data-frame="flower"><span class="thumb frame-flower">🌼</span><span class="label">Flower</span></button>
+        <button class="option" data-frame="cat"><span class="thumb frame-cat">🐱</span><span class="label">Cute Cat</span></button>
+        <button class="option" data-frame="dark"><span class="thumb frame-dark">💗</span><span class="label">Black Love</span></button>
+        <button class="option" data-frame="film"><span class="thumb frame-film"></span><span class="label">Film</span></button>
+        <button class="option" data-frame="none"><span class="thumb frame-none">⊘</span><span class="label">Tanpa Frame</span></button>
       </div>
     </section>
 
-    <section class="section">
-      <h2 class="section-title">Pilih Efek</h2>
-      <div class="effects-grid" id="effectList">
-        <button class="effect-btn active" data-effect="normal"><span class="effect-icon">⊘</span>Normal</button>
-        <button class="effect-btn" data-effect="fisheye"><span class="effect-icon">◓</span>Fisheye</button>
-        <button class="effect-btn" data-effect="blur"><span class="effect-icon">◎</span>Lens Blur</button>
-        <button class="effect-btn" data-effect="lightleak"><span class="effect-icon">☀</span>Light Leak</button>
-        <button class="effect-btn" data-effect="vhs"><span class="effect-icon">▣</span>VHS</button>
-        <button class="effect-btn" data-effect="glitch"><span class="effect-icon">⌁</span>Glitch</button>
+    <section class="section"><h2 class="title">Pilih Efek</h2>
+      <div class="effects" id="effects">
+        <button class="effect active" data-effect="normal"><span>⊘</span>Normal</button>
+        <button class="effect" data-effect="fisheye"><span>◓</span>Fisheye</button>
+        <button class="effect" data-effect="blur"><span>◎</span>Lens Blur</button>
+        <button class="effect" data-effect="light"><span>☀</span>Light Leak</button>
+        <button class="effect" data-effect="vhs"><span>▣</span>VHS</button>
+        <button class="effect" data-effect="glitch"><span>⌁</span>Glitch</button>
       </div>
     </section>
 
-    <section class="controls">
-      <button class="pill-btn" id="galleryBtn">▧ Galeri</button>
-      <button class="capture-btn" id="captureBtn" aria-label="Ambil foto">📷</button>
-      <button class="pill-btn" id="timerBtn">⏱ Timer</button>
-    </section>
-
+    <div class="controls">
+      <button class="pill" id="galleryBtn">▧ Galeri</button>
+      <button class="capture" id="capture">📷</button>
+      <button class="pill" id="timer">⏱ Timer</button>
+    </div>
+    <div class="status info" id="status"></div>
     <section class="gallery" id="gallery"></section>
   </main>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active"><span class="nav-icon">⌂</span>Home</button>
-    <button class="nav-item"><span class="nav-icon">♡</span>Stiker</button>
-    <button class="nav-item"><span class="nav-icon">●</span>Ambil Foto</button>
-    <button class="nav-item"><span class="nav-icon">▣</span>Cetak</button>
-    <button class="nav-item"><span class="nav-icon">◴</span>Riwayat</button>
+  <nav class="bottom">
+    <button class="nav active"><b>⌂</b>Home</button><button class="nav"><b>♡</b>Stiker</button>
+    <button class="nav"><b>●</b>Ambil Foto</button><button class="nav"><b>▣</b>Cetak</button>
+    <button class="nav"><b>◴</b>Riwayat</button>
   </nav>
 
-  <div class="toast" id="toast"></div>
+<script>
+  /*
+   * WAJIB: Ganti dengan URL Web App Apps Script milik Anda.
+   * Harus berakhiran /exec, bukan /dev.
+   */
+  const WEB_APP_URL =https://script.google.com/macros/s/AKfycbzPYeGCdLj1_EyEHrnlMR1VJyN2yvtqoLCY82SkZ0SR7TPPIokXYUyxBbvLnHHmptXZ/exec;
 
-  <script>
-    const video = document.getElementById('video');
-    const preview = document.getElementById('preview');
-    const ctx = preview.getContext('2d', { alpha:false });
-    const frameCanvas = document.getElementById('frameOverlay');
-    const frameCtx = frameCanvas.getContext('2d');
-    const cameraCard = document.getElementById('cameraCard');
-    const cameraMessage = document.getElementById('cameraMessage');
-    const cameraText = document.getElementById('cameraText');
-    const startCameraBtn = document.getElementById('startCamera');
-    const switchBtn = document.getElementById('switchBtn');
-    const zoomBtn = document.getElementById('zoomBtn');
-    const captureBtn = document.getElementById('captureBtn');
-    const gallery = document.getElementById('gallery');
-    const galleryBtn = document.getElementById('galleryBtn');
-    const timerBtn = document.getElementById('timerBtn');
-    const countdown = document.getElementById('countdown');
-    const toastEl = document.getElementById('toast');
+  const video=document.querySelector('#video'),view=document.querySelector('#view'),ctx=view.getContext('2d',{alpha:false});
+  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('#camera');
+  const permission=document.querySelector('#permission'),permissionText=document.querySelector('#permissionText');
+  const statusBox=document.querySelector('#status'),gallery=document.querySelector('#gallery'),countdown=document.querySelector('#countdown');
 
-    let stream = null;
-    let facingMode = 'user';
-    let selectedFilter = 'original';
-    let selectedEffect = 'normal';
-    let selectedFrame = 'pink';
-    let zoom = 1;
-    let timerSeconds = 0;
-    let rafId = null;
-    let lastFrameTime = 0;
+  let stream=null,facing='user',zoom=1,timer=0,filter='original',effect='normal',frame='pink',raf=0,last=0;
 
-    const filterMap = {
-      original:'none',
-      soft:'brightness(1.06) saturate(.90) contrast(.96)',
-      clean:'brightness(1.12) contrast(.93) saturate(.85)',
-      warm:'sepia(.16) saturate(1.18) brightness(1.03)',
-      bright:'brightness(1.18) contrast(1.05)',
-      cream:'sepia(.12) brightness(1.08) contrast(.92)'
+  const filters={
+    original:'none',soft:'brightness(1.07) saturate(.88) contrast(.96)',
+    clean:'brightness(1.14) contrast(.91) saturate(.82)',
+    warm:'sepia(.18) saturate(1.18) brightness(1.04)',
+    bright:'brightness(1.2) contrast(1.04)',cream:'sepia(.13) brightness(1.1) contrast(.92)'
+  };
+
+  function setStatus(message,type='info'){
+    statusBox.className='status show '+type;statusBox.textContent=message;
+  }
+
+  function resize(){
+    const r=camera.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);
+    view.width=Math.round(r.width*d);view.height=Math.round(r.height*d);
+    overlay.width=view.width;overlay.height=view.height;drawFrame(ox,overlay.width,overlay.height,frame);
+  }
+
+  async function startCamera(){
+    if(!navigator.mediaDevices?.getUserMedia){
+      permissionText.textContent='Browser tidak mendukung kamera.';return;
+    }
+    if(!isSecureContext && location.hostname!=='localhost'){
+      permissionText.textContent='Kamera hanya dapat digunakan melalui HTTPS.';return;
+    }
+    try{
+      if(stream)stream.getTracks().forEach(t=>t.stop());
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}},audio:false});
+      video.srcObject=stream;await video.play();permission.classList.add('hide');resize();
+      cancelAnimationFrame(raf);render();
+    }catch(e){
+      permission.classList.remove('hide');
+      permissionText.textContent=e.name==='NotAllowedError'
+        ?'Izin kamera ditolak. Izinkan kamera melalui pengaturan browser.'
+        :'Kamera gagal dibuka. Pastikan tidak digunakan aplikasi lain.';
+    }
+  }
+
+  function cover(c,source,w,h,mirror){
+    const sw=source.videoWidth||1280,sh=source.videoHeight||960,s=Math.max(w/sw,h/sh)*zoom;
+    const dw=sw*s,dh=sh*s,dx=(w-dw)/2,dy=(h-dh)/2;c.save();
+    if(mirror){c.translate(w,0);c.scale(-1,1);c.drawImage(source,w-dx-dw,dy,dw,dh)}
+    else c.drawImage(source,dx,dy,dw,dh);c.restore();
+  }
+
+  function render(ts=0){
+    raf=requestAnimationFrame(render);if(video.readyState<2||ts-last<30)return;last=ts;
+    const w=view.width,h=view.height;ctx.clearRect(0,0,w,h);ctx.save();
+    ctx.filter=filters[filter]+(effect==='blur'?' blur(5px)':'');cover(ctx,video,w,h,facing==='user');ctx.restore();
+    if(effect==='fisheye')fisheye(w,h);if(effect==='light')lightLeak(w,h,ts);
+    if(effect==='vhs')vhs(w,h,ts);if(effect==='glitch')glitch(w,h,ts);
+  }
+
+  function copyCanvas(){
+    const c=document.createElement('canvas');c.width=view.width;c.height=view.height;c.getContext('2d').drawImage(view,0,0);return c;
+  }
+  function fisheye(w,h){
+    const t=copyCanvas();ctx.clearRect(0,0,w,h);const n=70;
+    for(let i=0;i<n;i++){const sy=i*h/n,sh=h/n+1,yn=i/(n-1)*2-1,b=1+.27*(1-yn*yn),dw=w*b;
+      ctx.drawImage(t,0,sy,w,sh,(w-dw)/2,sy,dw,sh)}
+  }
+  function lightLeak(w,h,ts){
+    const x=(Math.sin(ts/850)+1)/2*w,g=ctx.createRadialGradient(x,h*.2,0,x,h*.2,w*.7);
+    g.addColorStop(0,'rgba(255,90,145,.34)');g.addColorStop(.35,'rgba(255,210,120,.17)');
+    g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)
+  }
+  function vhs(w,h,ts){
+    ctx.save();ctx.globalAlpha=.14;ctx.fillStyle='#fff';
+    for(let y=(ts/10)%10;y<h;y+=10)ctx.fillRect(0,y,w,2);ctx.restore()
+  }
+  function glitch(w,h,ts){
+    if(Math.floor(ts/120)%4!==0)return;const t=copyCanvas();
+    for(let i=0;i<7;i++){const y=Math.random()*h,sh=5+Math.random()*24,x=(Math.random()-.5)*35;
+      ctx.drawImage(t,0,y,w,sh,x,y,w,sh)}
+  }
+
+  function rounded(c,x,y,w,h,r){
+    c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()
+  }
+  function drawFrame(c,w,h,type){
+    c.clearRect(0,0,w,h);const s=Math.min(w,h);c.save();c.lineJoin='round';
+    if(type==='pink'){
+      c.strokeStyle='#ff9db9';c.lineWidth=s*.026;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.05);c.stroke();
+      c.fillStyle='rgba(255,225,235,.84)';c.fillRect(0,h-s*.13,w,s*.13);
+      c.fillStyle='#b94f72';c.font=`700 ${s*.045}px sans-serif`;c.textAlign='center';c.fillText('오늘도 예뻐 ♡',w/2,h-s*.045)
+    }
+    if(type==='flower'){c.strokeStyle='#c9e5c1';c.lineWidth=s*.03;rounded(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();c.font=`${s*.09}px serif`;c.fillText('🌼',s*.04,s*.12);c.fillText('🌸',w-s*.15,h-s*.04)}
+    if(type==='cat'){c.strokeStyle='#cbb8eb';c.lineWidth=s*.03;rounded(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();c.font=`${s*.1}px serif`;c.fillText('🐱',s*.04,h-s*.04);c.fillText('🎀',w-s*.16,s*.13)}
+    if(type==='dark'){c.strokeStyle='#111';c.lineWidth=s*.05;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.03);c.stroke();c.font=`${s*.08}px serif`;c.fillText('💗',s*.06,s*.13);c.fillText('💗',w-s*.16,s*.13)}
+    if(type==='film'){c.strokeStyle='#111';c.lineWidth=s*.055;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.02);c.stroke();c.fillStyle='#fff';for(let x=s*.07;x<w-s*.08;x+=s*.09){c.fillRect(x,s*.015,s*.045,s*.04);c.fillRect(x,h-s*.055,s*.045,s*.04)}}
+    c.restore()
+  }
+
+  async function capture(){
+    if(!stream){setStatus('Aktifkan kamera terlebih dahulu.','error');return}
+    if(timer){for(let i=timer;i>0;i--){countdown.textContent=i;countdown.classList.add('show');await new Promise(r=>setTimeout(r,1000))}countdown.classList.remove('show')}
+    const out=document.createElement('canvas');out.width=view.width;out.height=view.height;const c=out.getContext('2d');
+    c.drawImage(view,0,0);drawFrame(c,out.width,out.height,frame);
+    const dataUrl=out.toDataURL('image/jpeg',.9);addPhoto(dataUrl);setStatus('Foto berhasil diambil. Tekan Simpan Drive.','success')
+  }
+
+  function addPhoto(dataUrl){
+    const card=document.createElement('article');card.className='photo';
+    card.innerHTML=`<img alt="Hasil foto"><div class="photo-actions"><button class="small download">Unduh</button><button class="small save">Simpan Drive</button></div>`;
+    card.querySelector('img').src=dataUrl;
+    card.querySelector('.download').onclick=()=>{const a=document.createElement('a');a.href=dataUrl;a.download='korean-photobooth-'+Date.now()+'.jpg';a.click()};
+    card.querySelector('.save').onclick=()=>uploadPhoto(dataUrl,card.querySelector('.save'));
+    gallery.prepend(card)
+  }
+
+  async function uploadPhoto(dataUrl,button){
+    if(!WEB_APP_URL.startsWith('https://script.google.com/macros/s/')||!WEB_APP_URL.endsWith('/exec')){
+      setStatus('Isi WEB_APP_URL di index.html menggunakan URL deployment Apps Script yang berakhiran /exec.','error');return
+    }
+    button.disabled=true;button.textContent='Mengupload...';setStatus('Mengirim foto ke Google Drive...','info');
+
+    const payload={
+      image:dataUrl,fileName:'korean-photobooth',source:location.hostname||'Local',
+      filter:filter,effect:effect,frame:frame
     };
 
-    function toast(message){
-      toastEl.textContent = message;
-      toastEl.classList.add('show');
-      clearTimeout(toastEl._timer);
-      toastEl._timer = setTimeout(()=>toastEl.classList.remove('show'),1800);
+    try{
+      /*
+       * mode no-cors paling stabil untuk frontend statis menuju Apps Script.
+       * Browser tidak dapat membaca responsnya, tetapi request tetap diproses.
+       */
+      await fetch(WEB_APP_URL,{
+        method:'POST',mode:'no-cors',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload)
+      });
+      button.textContent='Terkirim ✓';button.classList.add('uploaded');
+      setStatus('Foto telah dikirim. Periksa folder Google Drive dan sheet Riwayat Foto.','success');
+    }catch(e){
+      console.error(e);button.disabled=false;button.textContent='Coba Lagi';
+      setStatus('Upload gagal. Periksa internet dan URL Web App Apps Script.','error')
     }
+  }
 
-    function resizeCanvas(){
-      const rect = cameraCard.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      preview.width = Math.round(rect.width * dpr);
-      preview.height = Math.round(rect.height * dpr);
-      frameCanvas.width = preview.width;
-      frameCanvas.height = preview.height;
-      drawFrame(frameCtx, frameCanvas.width, frameCanvas.height, selectedFrame);
-    }
+  function select(container,selector,key,setter){
+    document.querySelector(container).addEventListener('click',e=>{
+      const b=e.target.closest(selector);if(!b)return;
+      document.querySelectorAll(selector).forEach(x=>x.classList.remove('active'));b.classList.add('active');setter(b.dataset[key])
+    })
+  }
+  select('#filters','[data-filter]','filter',v=>filter=v);
+  select('#effects','[data-effect]','effect',v=>effect=v);
+  select('#frames','[data-frame]','frame',v=>{frame=v;drawFrame(ox,overlay.width,overlay.height,frame)});
 
-    async function startCamera(){
-      if(!navigator.mediaDevices?.getUserMedia){
-        cameraText.textContent = 'Browser ini tidak mendukung kamera. Gunakan Chrome, Edge, atau Safari terbaru.';
-        return;
-      }
-      if(!window.isSecureContext && location.hostname !== 'localhost'){
-        cameraText.textContent = 'Kamera hanya dapat aktif melalui HTTPS. Deploy ke Vercel/GitHub Pages lalu buka link HTTPS.';
-        return;
-      }
-      try{
-        if(stream) stream.getTracks().forEach(t=>t.stop());
-        stream = await navigator.mediaDevices.getUserMedia({
-          video:{
-            facingMode:{ideal:facingMode},
-            width:{ideal:1280},
-            height:{ideal:960}
-          },
-          audio:false
-        });
-        video.srcObject = stream;
-        await video.play();
-        cameraMessage.classList.add('hidden');
-        cameraCard.classList.toggle('back-camera', facingMode === 'environment');
-        resizeCanvas();
-        if(rafId) cancelAnimationFrame(rafId);
-        renderLoop();
-      }catch(err){
-        console.error(err);
-        cameraMessage.classList.remove('hidden');
-        cameraText.textContent =
-          err.name === 'NotAllowedError'
-          ? 'Izin kamera ditolak. Buka pengaturan browser, izinkan kamera, lalu coba lagi.'
-          : 'Kamera gagal dibuka. Pastikan kamera tidak sedang dipakai aplikasi lain.';
-      }
-    }
-
-    function drawVideoCover(context, source, width, height, mirror=false){
-      const sw = source.videoWidth || 1280;
-      const sh = source.videoHeight || 960;
-      const scale = Math.max(width/sw, height/sh) * zoom;
-      const dw = sw*scale, dh = sh*scale;
-      const dx = (width-dw)/2, dy = (height-dh)/2;
-
-      context.save();
-      if(mirror){
-        context.translate(width,0);
-        context.scale(-1,1);
-        context.drawImage(source, width-dx-dw, dy, dw, dh);
-      }else{
-        context.drawImage(source, dx, dy, dw, dh);
-      }
-      context.restore();
-    }
-
-    function renderLoop(ts=0){
-      rafId = requestAnimationFrame(renderLoop);
-      if(video.readyState < 2 || !preview.width) return;
-      if(ts-lastFrameTime < 30) return;
-      lastFrameTime = ts;
-
-      const w=preview.width,h=preview.height;
-      ctx.save();
-      ctx.clearRect(0,0,w,h);
-      ctx.filter = filterMap[selectedFilter] || 'none';
-
-      if(selectedEffect === 'blur') ctx.filter += ' blur(5px)';
-      drawVideoCover(ctx,video,w,h,facingMode==='user');
-      ctx.restore();
-
-      if(selectedEffect==='fisheye') applyFisheye(ctx,w,h);
-      if(selectedEffect==='lightleak') applyLightLeak(ctx,w,h,ts);
-      if(selectedEffect==='vhs') applyVHS(ctx,w,h,ts);
-      if(selectedEffect==='glitch') applyGlitch(ctx,w,h,ts);
-    }
-
-    function applyFisheye(context,w,h){
-      const temp=document.createElement('canvas');
-      temp.width=w;temp.height=h;
-      temp.getContext('2d').drawImage(preview,0,0);
-      context.clearRect(0,0,w,h);
-
-      const strips=70;
-      for(let i=0;i<strips;i++){
-        const sy=i*h/strips;
-        const sh=h/strips+1;
-        const yNorm=(i/(strips-1))*2-1;
-        const bulge=1+0.28*(1-yNorm*yNorm);
-        const dw=w*bulge;
-        const dx=(w-dw)/2;
-        context.drawImage(temp,0,sy,w,sh,dx,sy,dw,sh);
-      }
-      const grad=context.createRadialGradient(w/2,h/2,Math.min(w,h)*.2,w/2,h/2,Math.max(w,h)*.72);
-      grad.addColorStop(.55,'rgba(0,0,0,0)');
-      grad.addColorStop(1,'rgba(0,0,0,.20)');
-      context.fillStyle=grad;context.fillRect(0,0,w,h);
-    }
-
-    function applyLightLeak(context,w,h,ts){
-      const x=(Math.sin(ts/900)+1)/2*w;
-      const g=context.createRadialGradient(x,h*.2,0,x,h*.2,w*.7);
-      g.addColorStop(0,'rgba(255,110,160,.34)');
-      g.addColorStop(.35,'rgba(255,205,120,.18)');
-      g.addColorStop(1,'rgba(255,255,255,0)');
-      context.fillStyle=g;context.fillRect(0,0,w,h);
-    }
-
-    function applyVHS(context,w,h,ts){
-      context.save();
-      context.globalAlpha=.13;
-      context.fillStyle='#fff';
-      for(let y=(ts/10)%10;y<h;y+=10) context.fillRect(0,y,w,2);
-      context.globalAlpha=.12;
-      context.fillStyle='#00ffff';context.fillRect(0,0,4,h);
-      context.fillStyle='#ff006a';context.fillRect(w-4,0,4,h);
-      context.restore();
-    }
-
-    function applyGlitch(context,w,h,ts){
-      if(Math.floor(ts/120)%4!==0) return;
-      const temp=document.createElement('canvas');
-      temp.width=w;temp.height=h;
-      temp.getContext('2d').drawImage(preview,0,0);
-      for(let i=0;i<8;i++){
-        const y=Math.random()*h;
-        const sh=4+Math.random()*26;
-        const shift=(Math.random()-.5)*35;
-        context.drawImage(temp,0,y,w,sh,shift,y,w,sh);
-      }
-      context.save();
-      context.globalCompositeOperation='screen';
-      context.globalAlpha=.13;
-      context.drawImage(temp,8,0);
-      context.globalAlpha=.10;
-      context.drawImage(temp,-8,0);
-      context.restore();
-    }
-
-    function drawFrame(c,w,h,type){
-      c.clearRect(0,0,w,h);
-      const s=Math.min(w,h);
-      c.save();
-      c.lineJoin='round';
-
-      if(type==='pink'){
-        c.strokeStyle='#ff9db9';c.lineWidth=s*.025;
-        roundedRect(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.05);c.stroke();
-        c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=s*.009;
-        roundedRect(c,s*.045,s*.045,w-s*.09,h-s*.09,s*.04);c.stroke();
-        c.fillStyle='rgba(255,225,235,.82)';c.fillRect(0,h-s*.13,w,s*.13);
-        c.fillStyle='#c55d7e';c.font=`700 ${s*.045}px sans-serif`;
-        c.textAlign='center';c.fillText('오늘도 예뻐 ♡',w/2,h-s*.045);
-      }
-      if(type==='flower'){
-        c.strokeStyle='#c9e5c1';c.lineWidth=s*.028;
-        roundedRect(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();
-        c.font=`${s*.09}px serif`;
-        ['🌼','🌸','🌼','🌸'].forEach((f,i)=>c.fillText(f,[s*.07,w-s*.16,s*.08,w-s*.17][i],[s*.11,s*.13,h-s*.06,h-s*.07][i]));
-      }
-      if(type==='cat'){
-        c.strokeStyle='#cbb8eb';c.lineWidth=s*.03;
-        roundedRect(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();
-        c.font=`${s*.10}px serif`;c.fillText('🐱',s*.04,h-s*.04);c.fillText('🎀',w-s*.15,s*.13);
-        c.fillStyle='#5e477f';c.font=`700 ${s*.045}px sans-serif`;c.textAlign='center';
-        c.fillText('귀여워!',w/2,h-s*.05);
-      }
-      if(type==='dark'){
-        c.strokeStyle='#121212';c.lineWidth=s*.045;
-        roundedRect(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.035);c.stroke();
-        c.strokeStyle='#ff87ac';c.lineWidth=s*.009;
-        roundedRect(c,s*.055,s*.055,w-s*.11,h-s*.11,s*.025);c.stroke();
-        c.font=`${s*.075}px serif`;c.fillText('💗',s*.07,s*.12);c.fillText('💗',w-s*.16,s*.12);
-      }
-      if(type==='film'){
-        c.strokeStyle='#111';c.lineWidth=s*.055;
-        roundedRect(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.02);c.stroke();
-        c.fillStyle='#fff';
-        for(let x=s*.07;x<w-s*.08;x+=s*.09){
-          c.fillRect(x,s*.015,s*.045,s*.04);c.fillRect(x,h-s*.055,s*.045,s*.04);
-        }
-      }
-      c.restore();
-    }
-
-    function roundedRect(c,x,y,w,h,r){
-      c.beginPath();
-      c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
-      c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
-    }
-
-    async function takePhoto(){
-      if(!stream){toast('Aktifkan kamera terlebih dahulu');return}
-      if(timerSeconds>0){
-        for(let i=timerSeconds;i>0;i--){
-          countdown.textContent=i;countdown.classList.add('show');
-          await new Promise(r=>setTimeout(r,1000));
-        }
-        countdown.classList.remove('show');
-      }
-      captureBtn.animate([{transform:'scale(1)'},{transform:'scale(.86)'},{transform:'scale(1)'}],{duration:260});
-      const out=document.createElement('canvas');
-      out.width=preview.width;out.height=preview.height;
-      const o=out.getContext('2d');
-      o.drawImage(preview,0,0);
-      drawFrame(o,out.width,out.height,selectedFrame);
-
-      const url=out.toDataURL('image/jpeg',.94);
-      addToGallery(url);
-      toast('Foto berhasil diambil ♡');
-    }
-
-    function addToGallery(url){
-      gallery.classList.add('show');
-      const card=document.createElement('article');
-      card.className='photo-card';
-      card.innerHTML=`
-        <img src="${url}" alt="Hasil foto">
-        <div class="photo-card-actions">
-          <button class="small-btn download">Unduh</button>
-          <button class="small-btn delete">Hapus</button>
-        </div>`;
-      card.querySelector('.download').onclick=()=>{
-        const a=document.createElement('a');a.href=url;
-        a.download=`korean-photobooth-${Date.now()}.jpg`;a.click();
-      };
-      card.querySelector('.delete').onclick=()=>card.remove();
-      gallery.prepend(card);
-    }
-
-    document.getElementById('filterList').addEventListener('click',e=>{
-      const btn=e.target.closest('[data-filter]');if(!btn)return;
-      document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));
-      btn.classList.add('active');selectedFilter=btn.dataset.filter;
-    });
-
-    document.getElementById('frameList').addEventListener('click',e=>{
-      const btn=e.target.closest('[data-frame]');if(!btn)return;
-      document.querySelectorAll('[data-frame]').forEach(x=>x.classList.remove('active'));
-      btn.classList.add('active');selectedFrame=btn.dataset.frame;
-      drawFrame(frameCtx,frameCanvas.width,frameCanvas.height,selectedFrame);
-    });
-
-    document.getElementById('effectList').addEventListener('click',e=>{
-      const btn=e.target.closest('[data-effect]');if(!btn)return;
-      document.querySelectorAll('[data-effect]').forEach(x=>x.classList.remove('active'));
-      btn.classList.add('active');selectedEffect=btn.dataset.effect;
-    });
-
-    startCameraBtn.onclick=startCamera;
-    switchBtn.onclick=async()=>{facingMode=facingMode==='user'?'environment':'user';await startCamera()};
-    zoomBtn.onclick=()=>{
-      zoom=zoom===1?1.5:zoom===1.5?2:1;
-      zoomBtn.textContent=zoom+'×';
-    };
-    captureBtn.onclick=takePhoto;
-    galleryBtn.onclick=()=>{
-      gallery.classList.toggle('show');
-      if(gallery.classList.contains('show')) gallery.scrollIntoView({behavior:'smooth'});
-    };
-    timerBtn.onclick=()=>{
-      timerSeconds=timerSeconds===0?3:timerSeconds===3?5:0;
-      timerBtn.textContent=timerSeconds?`⏱ ${timerSeconds} detik`:'⏱ Timer';
-      toast(timerSeconds?`Timer ${timerSeconds} detik aktif`:'Timer dimatikan');
-    };
-
-    window.addEventListener('resize',resizeCanvas);
-    window.addEventListener('orientationchange',()=>setTimeout(resizeCanvas,250));
-    document.addEventListener('visibilitychange',()=>{if(document.hidden && stream) stream.getTracks().forEach(t=>t.enabled=false); else if(stream) stream.getTracks().forEach(t=>t.enabled=true)});
-    resizeCanvas();
-  </script>
+  document.querySelector('#start').onclick=startCamera;
+  document.querySelector('#switch').onclick=()=>{facing=facing==='user'?'environment':'user';startCamera()};
+  document.querySelector('#zoom').onclick=e=>{zoom=zoom===1?1.5:zoom===1.5?2:1;e.currentTarget.textContent=zoom+'×'};
+  document.querySelector('#capture').onclick=capture;
+  document.querySelector('#timer').onclick=e=>{timer=timer===0?3:timer===3?5:0;e.currentTarget.textContent=timer?'⏱ '+timer+' detik':'⏱ Timer'};
+  document.querySelector('#galleryBtn').onclick=()=>gallery.scrollIntoView({behavior:'smooth'});
+  addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();
+</script>
 </body>
 </html>
