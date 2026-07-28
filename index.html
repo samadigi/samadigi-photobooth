@@ -35,7 +35,15 @@
       position:relative;aspect-ratio:4/3;border-radius:30px;overflow:hidden;background:#f4c4d0;
       box-shadow:var(--shadow);isolation:isolate
     }
-    video{display:none}
+    video{
+      position:absolute;
+      width:1px;
+      height:1px;
+      opacity:0;
+      pointer-events:none;
+      left:-9999px;
+      top:-9999px;
+    }
     #view,#overlay{position:absolute;inset:0;width:100%;height:100%}
     #view{object-fit:cover;background:linear-gradient(135deg,#ffd7e2,#efb7c4)}
     #overlay{pointer-events:none;z-index:3}
@@ -99,13 +107,29 @@
     .countdown.show{display:grid}
     .bottom{
       position:fixed;z-index:30;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);
-      width:min(calc(100% - 24px),720px);display:grid;grid-template-columns:repeat(5,1fr);
-      background:rgba(255,255,255,.9);backdrop-filter:blur(17px);border:1px solid var(--line);
-      border-radius:27px;padding:12px 5px;box-shadow:0 14px 40px rgba(70,26,43,.12)
+      width:min(calc(100% - 24px),720px);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+      background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border:1px solid var(--line);
+      border-radius:27px;padding:9px 6px;box-shadow:0 14px 40px rgba(70,26,43,.15)
     }
-    .nav{border:0;background:transparent;color:#898389;font-size:12px}.nav b{display:block;font-size:22px;margin-bottom:3px}
-    .nav.active{color:var(--pink);font-weight:900}
+    .nav{
+      min-width:0;min-height:58px;border:0;border-radius:18px;background:transparent;color:#898389;
+      font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+      cursor:pointer;transition:background .2s ease,color .2s ease,transform .2s ease;touch-action:manipulation
+    }
+    .nav b{display:block;font-size:22px;line-height:1}.nav span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .nav:hover{background:#fff1f5;color:#c24a72}.nav:active{transform:scale(.94)}
+    .nav.active{color:var(--pink);font-weight:900;background:#fff1f5}
+    .nav-capture b{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink);color:#fff;font-size:16px;box-shadow:0 5px 14px rgba(255,125,165,.3)}
     @media(min-width:690px){.effects{grid-template-columns:repeat(6,1fr)}}
+    @media(min-width:1100px){
+      .app{width:min(100%,980px);padding-left:110px;padding-right:24px;padding-bottom:40px}
+      .bottom{left:24px;top:50%;bottom:auto;transform:translateY(-50%);width:78px;grid-template-columns:1fr;padding:10px 7px;border-radius:24px;gap:4px}
+      .nav{min-height:68px;font-size:11px}.nav b{font-size:23px}
+    }
+    @media(max-width:520px){
+      .bottom{width:calc(100% - 16px);bottom:max(7px,env(safe-area-inset-bottom));border-radius:22px;padding:7px 3px}
+      .nav{min-height:54px;font-size:10.5px;border-radius:15px}.nav b{font-size:20px}.nav-capture b{width:31px;height:31px}
+    }
     @media(max-width:420px){.app{padding-left:11px;padding-right:11px}.option{flex-basis:81px}.thumb{height:81px}.effect{font-size:13px}.capture{width:88px;height:88px}.pill{font-size:13px}}
   </style>
 </head>
@@ -117,7 +141,7 @@
       <span class="tag">Capture your mood ♥</span>
     </div>
 
-    <section class="camera" id="camera">
+    <section class="camera" id="homeSection">
       <video id="video" autoplay playsinline muted></video>
       <canvas id="view"></canvas><canvas id="overlay"></canvas>
       <div class="countdown" id="countdown">3</div>
@@ -143,7 +167,7 @@
       </div>
     </section>
 
-    <section class="section"><h2 class="title">Pilih Frame</h2>
+    <section class="section" id="stickerSection"><h2 class="title">Pilih Frame</h2>
       <div class="scroll" id="frames">
         <button class="option active" data-frame="pink"><span class="thumb frame-pink"></span><span class="label">Pink</span></button>
         <button class="option" data-frame="flower"><span class="thumb frame-flower">🌼</span><span class="label">Flower</span></button>
@@ -174,10 +198,12 @@
     <section class="gallery" id="gallery"></section>
   </main>
 
-  <nav class="bottom">
-    <button class="nav active"><b>⌂</b>Home</button><button class="nav"><b>♡</b>Stiker</button>
-    <button class="nav"><b>●</b>Ambil Foto</button><button class="nav"><b>▣</b>Cetak</button>
-    <button class="nav"><b>◴</b>Riwayat</button>
+  <nav class="bottom" id="bottomNav" aria-label="Navigasi utama">
+    <button class="nav active" data-nav="home" type="button"><b>⌂</b><span>Home</span></button>
+    <button class="nav" data-nav="sticker" type="button"><b>♡</b><span>Stiker</span></button>
+    <button class="nav nav-capture" data-nav="capture" type="button"><b>●</b><span>Ambil Foto</span></button>
+    <button class="nav" data-nav="print" type="button"><b>▣</b><span>Cetak</span></button>
+    <button class="nav" data-nav="history" type="button"><b>◴</b><span>Riwayat</span></button>
   </nav>
 
 <script>
@@ -188,7 +214,7 @@
   const WEB_APP_URL =https://script.google.com/macros/s/AKfycbzPYeGCdLj1_EyEHrnlMR1VJyN2yvtqoLCY82SkZ0SR7TPPIokXYUyxBbvLnHHmptXZ/exec;
 
   const video=document.querySelector('#video'),view=document.querySelector('#view'),ctx=view.getContext('2d',{alpha:false});
-  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('#camera');
+  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('#homeSection');
   const permission=document.querySelector('#permission'),permissionText=document.querySelector('#permissionText');
   const statusBox=document.querySelector('#status'),gallery=document.querySelector('#gallery'),countdown=document.querySelector('#countdown');
 
@@ -221,8 +247,29 @@
     try{
       if(stream)stream.getTracks().forEach(t=>t.stop());
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}},audio:false});
-      video.srcObject=stream;await video.play();permission.classList.add('hide');resize();
+      video.srcObject=stream;
+
+      await new Promise((resolve,reject)=>{
+        const ready=()=>resolve();
+        const fail=()=>reject(new Error('Video stream gagal dimuat.'));
+        if(video.readyState>=2 && video.videoWidth>0) return resolve();
+        video.addEventListener('loadedmetadata',ready,{once:true});
+        video.addEventListener('error',fail,{once:true});
+        setTimeout(()=>resolve(),2500);
+      });
+
+      await video.play();
+
+      // Tunggu frame kamera benar-benar tersedia, penting untuk Chrome Android/Safari.
+      for(let i=0;i<40 && (!video.videoWidth || !video.videoHeight || video.readyState<2);i++){
+        await new Promise(r=>setTimeout(r,50));
+      }
+
+      permission.classList.add('hide');resize();
       cancelAnimationFrame(raf);render();
+
+      // Paksa gambar frame pertama agar hasil foto tidak hitam.
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     }catch(e){
       permission.classList.remove('hide');
       permissionText.textContent=e.name==='NotAllowedError'
@@ -287,12 +334,53 @@
     c.restore()
   }
 
+  function renderSingleFrame(){
+    if(video.readyState<2 || !video.videoWidth || !video.videoHeight){
+      throw new Error('Frame kamera belum siap.');
+    }
+    const w=view.width,h=view.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.save();
+    ctx.filter=filters[filter]+(effect==='blur'?' blur(5px)':'');
+    cover(ctx,video,w,h,facing==='user');
+    ctx.restore();
+    if(effect==='fisheye')fisheye(w,h);
+    if(effect==='light')lightLeak(w,h,performance.now());
+    if(effect==='vhs')vhs(w,h,performance.now());
+    if(effect==='glitch')glitch(w,h,performance.now());
+  }
+
   async function capture(){
     if(!stream){setStatus('Aktifkan kamera terlebih dahulu.','error');return}
     if(timer){for(let i=timer;i>0;i--){countdown.textContent=i;countdown.classList.add('show');await new Promise(r=>setTimeout(r,1000))}countdown.classList.remove('show')}
-    const out=document.createElement('canvas');out.width=view.width;out.height=view.height;const c=out.getContext('2d');
-    c.drawImage(view,0,0);drawFrame(c,out.width,out.height,frame);
-    const dataUrl=out.toDataURL('image/jpeg',.9);addPhoto(dataUrl);setStatus('Foto berhasil diambil. Tekan Simpan Drive.','success')
+
+    try{
+      // Ambil frame langsung dari video saat tombol ditekan.
+      renderSingleFrame();
+      await new Promise(r=>requestAnimationFrame(r));
+
+      const out=document.createElement('canvas');
+      out.width=view.width;
+      out.height=view.height;
+      const c=out.getContext('2d',{alpha:false});
+      c.fillStyle='#ffffff';
+      c.fillRect(0,0,out.width,out.height);
+      c.drawImage(view,0,0,out.width,out.height);
+      drawFrame(c,out.width,out.height,frame);
+
+      const dataUrl=out.toDataURL('image/jpeg',.92);
+
+      // Cegah menyimpan foto kosong/hitam karena stream belum siap.
+      if(!dataUrl || dataUrl.length<5000){
+        throw new Error('Hasil foto belum siap. Tunggu sebentar lalu coba lagi.');
+      }
+
+      addPhoto(dataUrl);
+      setStatus('Foto berhasil diambil. Tekan Simpan Drive.','success');
+    }catch(err){
+      console.error(err);
+      setStatus(err.message || 'Foto gagal diambil. Coba aktifkan ulang kamera.','error');
+    }
   }
 
   function addPhoto(dataUrl){
@@ -348,7 +436,38 @@
   document.querySelector('#zoom').onclick=e=>{zoom=zoom===1?1.5:zoom===1.5?2:1;e.currentTarget.textContent=zoom+'×'};
   document.querySelector('#capture').onclick=capture;
   document.querySelector('#timer').onclick=e=>{timer=timer===0?3:timer===3?5:0;e.currentTarget.textContent=timer?'⏱ '+timer+' detik':'⏱ Timer'};
-  document.querySelector('#galleryBtn').onclick=()=>gallery.scrollIntoView({behavior:'smooth'});
+  document.querySelector('#galleryBtn').onclick=()=>gallery.scrollIntoView({behavior:'smooth',block:'start'});
+
+  function setActiveNav(name){
+    document.querySelectorAll('[data-nav]').forEach(btn=>btn.classList.toggle('active',btn.dataset.nav===name));
+  }
+
+  function printLatestPhoto(){
+    const image=gallery.querySelector('.photo img');
+    if(!image){setStatus('Belum ada foto untuk dicetak. Ambil foto terlebih dahulu.','error');return}
+    const win=window.open('','_blank','width=900,height=700');
+    if(!win){setStatus('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.','error');return}
+    win.document.write(`<!doctype html><html><head><title>Cetak Foto</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fff}img{max-width:95vw;max-height:95vh;object-fit:contain}@media print{body{display:block}img{width:100%;max-width:none;max-height:none}}</style></head><body><img src="${image.src}" onload="setTimeout(()=>window.print(),250)"></body></html>`);
+    win.document.close();
+  }
+
+  document.querySelector('#bottomNav').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-nav]');if(!btn)return;
+    const action=btn.dataset.nav;setActiveNav(action);
+    if(action==='home') document.querySelector('.brand').scrollIntoView({behavior:'smooth',block:'start'});
+    if(action==='sticker') document.querySelector('#stickerSection').scrollIntoView({behavior:'smooth',block:'start'});
+    if(action==='capture'){
+      document.querySelector('#homeSection').scrollIntoView({behavior:'smooth',block:'center'});
+      if(!stream){setStatus('Aktifkan kamera terlebih dahulu.','info');permission.classList.remove('hide')}
+      else await capture();
+    }
+    if(action==='print') printLatestPhoto();
+    if(action==='history'){
+      if(!gallery.children.length)setStatus('Riwayat masih kosong. Ambil foto terlebih dahulu.','info');
+      gallery.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  });
+
   addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();
 </script>
 </body>
