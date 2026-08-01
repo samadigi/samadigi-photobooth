@@ -1,577 +1,63 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#fff7fa">
-  <title>Korean Photobooth</title>
-  <style>
-    :root{
-      --pink:#ff7da5;--pink2:#ffabc2;--soft:#fff1f5;--text:#262326;
-      --muted:#777077;--line:#ecdde3;--card:#fff;--shadow:0 16px 42px rgba(136,51,83,.13)
-    }
-    *{box-sizing:border-box}
-    html{background:#fff8fb;scroll-behavior:smooth}
-    body{
-      margin:0;color:var(--text);font-family:Inter,ui-rounded,"Segoe UI",Arial,sans-serif;
-      background:
-        radial-gradient(circle at 20% 0,rgba(255,165,190,.18),transparent 28%),
-        linear-gradient(#fffdfd,#fff7fa);overflow-x:hidden
-    }
-    button{
-      font:inherit;
-      -webkit-tap-highlight-color:transparent;
-      touch-action:manipulation;
-      cursor:pointer;
-      user-select:none;
-    }
-    button:disabled{opacity:.65;cursor:not-allowed}
-    .app{width:min(100%,760px);margin:auto;padding:18px 15px 120px}
-    .top{display:flex;justify-content:space-between;align-items:center}
-    .square{
-      width:48px;height:48px;border:1px solid var(--line);border-radius:16px;background:#fff;
-      display:grid;place-items:center;font-size:24px;box-shadow:0 7px 20px rgba(0,0,0,.05)
-    }
-    .brand{text-align:center;margin:8px 0 20px;line-height:.92}
-    .brand strong{display:block;font-size:clamp(37px,10vw,65px);font-weight:1000;letter-spacing:-2px}
-    .brand .pink{color:var(--pink)} .tag{
-      display:inline-block;margin-top:12px;padding:7px 21px;border-radius:999px;color:#fff;
-      background:linear-gradient(90deg,var(--pink),#ffb0c6);font-weight:800
-    }
-    .camera{
-      position:relative;aspect-ratio:4/3;border-radius:30px;overflow:hidden;background:#f4c4d0;
-      box-shadow:var(--shadow);isolation:isolate
-    }
-    video{
-      position:absolute;
-      width:1px;
-      height:1px;
-      opacity:0;
-      pointer-events:none;
-      left:-9999px;
-      top:-9999px;
-    }
-    #view,#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-    #view{object-fit:cover;background:linear-gradient(135deg,#ffd7e2,#efb7c4)}
-    #overlay{pointer-events:none;z-index:3}
-    .camera-actions{position:absolute;z-index:5;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between}
-    .circle{
-      width:54px;height:54px;border:0;border-radius:50%;color:#fff;background:rgba(25,25,25,.7);
-      display:grid;place-items:center;font-weight:900;font-size:17px
-    }
-    .permission{
-      position:absolute;inset:0;z-index:50;display:grid;place-items:center;text-align:center;padding:25px;
-      background:rgba(255,247,250,.94);backdrop-filter:blur(10px);
-      pointer-events:auto;
-    }
-    .permission>div{position:relative;z-index:52;pointer-events:auto}
-    #start{
-      position:relative;
-      z-index:60;
-      pointer-events:auto;
-      touch-action:manipulation;
-      min-width:170px;
-      min-height:52px;
-    }
-    .permission.hide{display:none}.permission h2{margin:0 0 8px}.permission p{line-height:1.45;color:#625b61}
-    .primary{
-      border:0;border-radius:999px;background:var(--pink);color:#fff;padding:13px 21px;
-      font-weight:900;box-shadow:0 9px 24px rgba(255,125,165,.3)
-    }
-    .section{margin-top:27px}.title{font-size:21px;font-weight:950;margin:0 0 13px}
-    .title:before{content:"♥";color:var(--pink);font-size:14px;margin-right:8px}
-    .scroll{display:flex;gap:12px;overflow:auto;padding:3px 2px 8px;scrollbar-width:none}
-    .scroll::-webkit-scrollbar{display:none}
-    .option{border:0;background:transparent;padding:0;flex:0 0 91px;text-align:center}
-    .thumb{
-      height:91px;border-radius:18px;background:linear-gradient(135deg,#5b3d45 0 35%,#f1c8d2 36% 65%,#fff 66%);
-      border:3px solid transparent;box-shadow:0 7px 17px rgba(0,0,0,.06);display:grid;place-items:center;
-      font-size:33px;overflow:hidden
-    }
-    .option.active .thumb{border-color:var(--pink);transform:translateY(-2px)}
-    .label{display:block;margin-top:7px;font-size:14px;font-weight:750}
-    .frame-pink{background:#fff;border:8px double #ff9bb8}.frame-flower{background:#fff;border:8px solid #c9e7bf}
-    .frame-cat{background:#fff;border:8px solid #ccb9eb}.frame-dark{background:#fff;border:10px solid #151515}
-    .frame-film{background:#fff;border:10px dotted #161616}.frame-none{background:#fff}
-    .effects{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .effect{
-      min-height:92px;border:1px solid var(--line);border-radius:17px;background:#fff;display:grid;
-      place-items:center;align-content:center;gap:7px;font-weight:750
-    }
-    .effect span{font-size:26px}.effect.active{border:2px solid var(--pink);background:#fff8fb}
-    .controls{display:grid;grid-template-columns:1fr auto 1fr;gap:13px;align-items:center;margin:28px 0 12px}
-    .pill{
-      min-width:0;border:1px solid var(--line);background:#fff;border-radius:999px;padding:13px 8px;
-      font-weight:850;box-shadow:0 7px 18px rgba(0,0,0,.04)
-    }
-    .capture{
-      width:100px;height:100px;border-radius:50%;border:8px solid #ffd1df;
-      background:linear-gradient(145deg,#ff9dbc,#ff719d);color:#fff;font-size:35px;
-      box-shadow:0 12px 26px rgba(255,125,165,.28)
-    }
-    .status{
-      display:none;margin:15px 0 0;padding:12px 14px;border-radius:15px;font-weight:750;line-height:1.4
-    }
-    .status.show{display:block}.status.info{background:#fff0f5;color:#9d3156}
-    .status.success{background:#eaf9ef;color:#24733d}.status.error{background:#fff0f0;color:#a42b2b}
-    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px}
-    .photo{background:#fff;padding:7px;border-radius:17px;box-shadow:0 8px 20px rgba(0,0,0,.07)}
-    .photo img{width:100%;display:block;border-radius:12px}
-    .photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
-    .small{border:0;border-radius:11px;background:#fff0f5;color:#a43259;padding:9px 5px;font-weight:850}
-    .small.uploaded{background:#eaf9ef;color:#24733d}
-    .countdown{position:absolute;inset:0;z-index:15;display:none;place-items:center;background:rgba(0,0,0,.2);color:#fff;font-size:95px;font-weight:1000}
-    .countdown.show{display:grid}
-    .bottom{
-      position:fixed;z-index:30;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);
-      width:min(calc(100% - 24px),720px);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
-      background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border:1px solid var(--line);
-      border-radius:27px;padding:9px 6px;box-shadow:0 14px 40px rgba(70,26,43,.15)
-    }
-    .nav{
-      min-width:0;min-height:58px;border:0;border-radius:18px;background:transparent;color:#898389;
-      font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-      cursor:pointer;transition:background .2s ease,color .2s ease,transform .2s ease;touch-action:manipulation
-    }
-    .nav b{display:block;font-size:22px;line-height:1}.nav span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-    .nav:hover{background:#fff1f5;color:#c24a72}.nav:active{transform:scale(.94)}
-    .nav.active{color:var(--pink);font-weight:900;background:#fff1f5}
-    .nav-capture b{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink);color:#fff;font-size:16px;box-shadow:0 5px 14px rgba(255,125,165,.3)}
-    @media(min-width:690px){.effects{grid-template-columns:repeat(6,1fr)}}
-    @media(min-width:1100px){
-      .app{width:min(100%,980px);padding-left:110px;padding-right:24px;padding-bottom:40px}
-      .bottom{left:24px;top:50%;bottom:auto;transform:translateY(-50%);width:78px;grid-template-columns:1fr;padding:10px 7px;border-radius:24px;gap:4px}
-      .nav{min-height:68px;font-size:11px}.nav b{font-size:23px}
-    }
-    @media(max-width:520px){
-      .bottom{width:calc(100% - 16px);bottom:max(7px,env(safe-area-inset-bottom));border-radius:22px;padding:7px 3px}
-      .nav{min-height:54px;font-size:10.5px;border-radius:15px}.nav b{font-size:20px}.nav-capture b{width:31px;height:31px}
-    }
-    @media(max-width:420px){.app{padding-left:11px;padding-right:11px}.option{flex-basis:81px}.thumb{height:81px}.effect{font-size:13px}.capture{width:88px;height:88px}.pill{font-size:13px}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamaDigi | Jasa Deploy</title>
+    
+    <!-- Meta Tags untuk SEO dan Link Preview -->
+    <meta name="description" content="Jasa Joki Deploy & Custom Domain by SAMA DIGI">
+    <meta property="og:title" content="SamaDeploy App">
+    <meta property="og:description" content="Solusi teknis cepat dan aman untuk deploy aplikasi Anda.">
+    
+    <!-- Favicon (Opsional, ganti href dengan link ikon Anda) -->
+    <link rel="icon" type="image/png" href="https://via.placeholder.com/32">
+
+    <style>
+        /* Reset margin dan pastikan tinggi 100% dari layar */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden; /* Mencegah munculnya scrollbar ganda */
+            background-color: #050508; /* Warna background SamaDigi saat iframe loading */
+        }
+
+        /* Iframe dibuat menutupi seluruh layar tanpa border */
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Loading indicator ringan sebelum iframe termuat sepenuhnya */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00f3ff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+            z-index: -1;
+        }
+    </style>
 </head>
 <body>
-  <main class="app">
-    <header class="top"><button class="square" type="button">☰</button><button class="square" type="button">♕</button></header>
-    <div class="brand">
-      <strong class="pink">♡ KOREAN</strong><strong>PHOTOBOOTH</strong>
-      <span class="tag">Capture your mood ♥</span>
-    </div>
+    
+    <div id="loader">Memuat Aplikasi...</div>
 
-    <section class="camera" id="homeSection">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="view"></canvas><canvas id="overlay"></canvas>
-      <div class="countdown" id="countdown">3</div>
-      <div class="camera-actions">
-        <button class="circle" id="zoom" type="button">1×</button><button class="circle" id="switch" type="button">↻</button>
-      </div>
-      <div class="permission" id="permission">
-        <div><h2>Aktifkan Kamera</h2>
-          <p id="permissionText">Tekan tombol berikut lalu izinkan akses kamera.</p>
-          <button class="primary" id="start" type="button" aria-label="Buka kamera" onclick="window.openPhotoboothCamera(event)">Buka Kamera</button>
-        </div>
-      </div>
-    </section>
+    <!-- Iframe URL Google Apps Script Anda -->
+    <iframe 
+        src="https://script.google.com/macros/s/AKfycbwpmVdrUa6l-AnFIZO_07h1o3gVBFOg6P8zEU8nrJ7tSwry9Ymprf4KLTwYXAS4EzPWtQ/exec" 
+        allowfullscreen="true" 
+        allow="camera; microphone; fullscreen; display-capture" 
+        title="SamaDeploy App">
+    </iframe>
 
-    <section class="section"><h2 class="title">Pilih Filter</h2>
-      <div class="scroll" id="filters">
-        <button class="option active" data-filter="original"><span class="thumb">♡</span><span class="label">Original</span></button>
-        <button class="option" data-filter="soft"><span class="thumb" style="filter:brightness(1.08) saturate(.85)">♡</span><span class="label">Soft</span></button>
-        <button class="option" data-filter="clean"><span class="thumb" style="filter:brightness(1.15) contrast(.9)">♡</span><span class="label">Clean</span></button>
-        <button class="option" data-filter="warm"><span class="thumb" style="filter:sepia(.25) saturate(1.2)">♡</span><span class="label">Warm</span></button>
-        <button class="option" data-filter="bright"><span class="thumb" style="filter:brightness(1.2)">♡</span><span class="label">Bright</span></button>
-        <button class="option" data-filter="cream"><span class="thumb" style="filter:sepia(.15) brightness(1.1)">♡</span><span class="label">Cream</span></button>
-      </div>
-    </section>
-
-    <section class="section" id="stickerSection"><h2 class="title">Pilih Frame</h2>
-      <div class="scroll" id="frames">
-        <button class="option active" data-frame="pink"><span class="thumb frame-pink"></span><span class="label">Pink</span></button>
-        <button class="option" data-frame="flower"><span class="thumb frame-flower">🌼</span><span class="label">Flower</span></button>
-        <button class="option" data-frame="cat"><span class="thumb frame-cat">🐱</span><span class="label">Cute Cat</span></button>
-        <button class="option" data-frame="dark"><span class="thumb frame-dark">💗</span><span class="label">Black Love</span></button>
-        <button class="option" data-frame="film"><span class="thumb frame-film"></span><span class="label">Film</span></button>
-        <button class="option" data-frame="none"><span class="thumb frame-none">⊘</span><span class="label">Tanpa Frame</span></button>
-      </div>
-    </section>
-
-    <section class="section"><h2 class="title">Pilih Efek</h2>
-      <div class="effects" id="effects">
-        <button class="effect active" data-effect="normal"><span>⊘</span>Normal</button>
-        <button class="effect" data-effect="fisheye"><span>◓</span>Fisheye</button>
-        <button class="effect" data-effect="blur"><span>◎</span>Lens Blur</button>
-        <button class="effect" data-effect="light"><span>☀</span>Light Leak</button>
-        <button class="effect" data-effect="vhs"><span>▣</span>VHS</button>
-        <button class="effect" data-effect="glitch"><span>⌁</span>Glitch</button>
-      </div>
-    </section>
-
-    <div class="controls">
-      <button class="pill" id="galleryBtn" type="button">▧ Galeri</button>
-      <button class="capture" id="capture" type="button">📷</button>
-      <button class="pill" id="timer" type="button">⏱ Timer</button>
-    </div>
-    <div class="status info" id="status"></div>
-    <section class="gallery" id="gallery"></section>
-  </main>
-
-  <nav class="bottom" id="bottomNav" aria-label="Navigasi utama">
-    <button class="nav active" data-nav="home" type="button"><b>⌂</b><span>Home</span></button>
-    <button class="nav" data-nav="sticker" type="button"><b>♡</b><span>Stiker</span></button>
-    <button class="nav nav-capture" data-nav="capture" type="button"><b>●</b><span>Ambil Foto</span></button>
-    <button class="nav" data-nav="print" type="button"><b>▣</b><span>Cetak</span></button>
-    <button class="nav" data-nav="history" type="button"><b>◴</b><span>Riwayat</span></button>
-  </nav>
-
-<script>
-  /*
-   * WAJIB: Ganti dengan URL Web App Apps Script milik Anda.
-   * Harus berakhiran /exec, bukan /dev.
-   */
-  const WEB_APP_URL =https://script.google.com/macros/s/AKfycbzPYeGCdLj1_EyEHrnlMR1VJyN2yvtqoLCY82SkZ0SR7TPPIokXYUyxBbvLnHHmptXZ/exec;
-
-  const video=document.querySelector('#video'),view=document.querySelector('#view'),ctx=view.getContext('2d',{alpha:false});
-  const overlay=document.querySelector('#overlay'),ox=overlay.getContext('2d'),camera=document.querySelector('.camera');
-  const permission=document.querySelector('#permission'),permissionText=document.querySelector('#permissionText');
-  const statusBox=document.querySelector('#status'),gallery=document.querySelector('#gallery'),countdown=document.querySelector('#countdown');
-
-  let stream=null,facing='user',zoom=1,timer=0,filter='original',effect='normal',frame='pink',raf=0,last=0;
-
-  const filters={
-    original:'none',soft:'brightness(1.07) saturate(.88) contrast(.96)',
-    clean:'brightness(1.14) contrast(.91) saturate(.82)',
-    warm:'sepia(.18) saturate(1.18) brightness(1.04)',
-    bright:'brightness(1.2) contrast(1.04)',cream:'sepia(.13) brightness(1.1) contrast(.92)'
-  };
-
-  function setStatus(message,type='info'){
-    statusBox.className='status show '+type;statusBox.textContent=message;
-  }
-
-  function resize(){
-    const r=camera.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);
-    view.width=Math.round(r.width*d);view.height=Math.round(r.height*d);
-    overlay.width=view.width;overlay.height=view.height;drawFrame(ox,overlay.width,overlay.height,frame);
-  }
-
-  let cameraStarting=false;
-
-  function cameraErrorMessage(error){
-    const name=error && error.name ? error.name : '';
-    if(name==='NotAllowedError' || name==='PermissionDeniedError'){
-      return 'Izin kamera ditolak. Tekan ikon pengaturan di samping alamat website → Izin situs → Kamera → Izinkan, lalu refresh.';
-    }
-    if(name==='NotFoundError' || name==='DevicesNotFoundError'){
-      return 'Kamera tidak ditemukan pada perangkat ini.';
-    }
-    if(name==='NotReadableError' || name==='TrackStartError'){
-      return 'Kamera sedang digunakan aplikasi lain. Tutup Kamera, WhatsApp, Instagram, atau aplikasi video lainnya.';
-    }
-    if(name==='OverconstrainedError'){
-      return 'Pengaturan kamera tidak didukung perangkat ini.';
-    }
-    if(name==='SecurityError'){
-      return 'Browser memblokir kamera karena pengaturan keamanan.';
-    }
-    return 'Kamera gagal dibuka: '+((error && error.message) || name || 'kesalahan tidak diketahui');
-  }
-
-  async function startCamera(event){
-    if(event){
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    if(cameraStarting)return;
-
-    const startBtn=document.querySelector('#start');
-    cameraStarting=true;
-    startBtn.disabled=true;
-    startBtn.textContent='Membuka...';
-    permissionText.textContent='Browser sedang meminta izin kamera...';
-    setStatus('Meminta izin kamera...','info');
-
-    try{
-      if(!window.isSecureContext && location.hostname!=='localhost'){
-        throw new Error('Website harus dibuka melalui HTTPS.');
-      }
-
-      if(!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia!=='function'){
-        throw new Error('Browser ini tidak mendukung akses kamera. Gunakan Chrome terbaru.');
-      }
-
-      if(stream){
-        stream.getTracks().forEach(track=>track.stop());
-        stream=null;
-      }
-
-      // Gunakan constraint paling sederhana dahulu agar kompatibel di lebih banyak HP.
-      try{
-        stream=await navigator.mediaDevices.getUserMedia({
-          audio:false,
-          video:{facingMode:facing}
-        });
-      }catch(firstError){
-        console.warn('Constraint kamera pertama gagal, mencoba fallback.',firstError);
-        stream=await navigator.mediaDevices.getUserMedia({
-          audio:false,
-          video:true
-        });
-      }
-
-      if(!stream || !stream.getVideoTracks().length){
-        throw new Error('Stream kamera tidak tersedia.');
-      }
-
-      video.srcObject=stream;
-      video.muted=true;
-      video.setAttribute('playsinline','');
-      video.setAttribute('autoplay','');
-
-      await video.play();
-
-      // Tunggu dimensi video benar-benar tersedia.
-      await new Promise((resolve,reject)=>{
-        let finished=false;
-        const done=()=>{
-          if(finished)return;
-          finished=true;
-          clearTimeout(timeout);
-          resolve();
-        };
-        const timeout=setTimeout(()=>{
-          if(video.videoWidth>0 && video.videoHeight>0)done();
-          else reject(new Error('Kamera aktif tetapi gambar belum tersedia.'));
-        },5000);
-
-        if(video.videoWidth>0 && video.videoHeight>0){
-          done();
-        }else{
-          video.addEventListener('loadeddata',done,{once:true});
-          video.addEventListener('canplay',done,{once:true});
-        }
-      });
-
-      permission.classList.add('hide');
-      resize();
-      cancelAnimationFrame(raf);
-      render();
-
-      if('requestVideoFrameCallback' in HTMLVideoElement.prototype){
-        await new Promise(resolve=>video.requestVideoFrameCallback(()=>resolve()));
-      }else{
-        await new Promise(resolve=>setTimeout(resolve,250));
-      }
-
-      renderSingleFrame();
-      setStatus('Kamera berhasil dibuka.','success');
-    }catch(error){
-      console.error('Camera start error:',error);
-      permission.classList.remove('hide');
-      permissionText.textContent=cameraErrorMessage(error);
-      setStatus(permissionText.textContent,'error');
-    }finally{
-      cameraStarting=false;
-      startBtn.disabled=false;
-      startBtn.textContent='Buka Kamera';
-    }
-  }
-
-  // Fungsi global sebagai fallback untuk onclick HTML pada browser Android.
-  window.openPhotoboothCamera=startCamera;
-
-  function cover(c,source,w,h,mirror){
-    const sw=source.videoWidth||1280,sh=source.videoHeight||960,s=Math.max(w/sw,h/sh)*zoom;
-    const dw=sw*s,dh=sh*s,dx=(w-dw)/2,dy=(h-dh)/2;c.save();
-    if(mirror){c.translate(w,0);c.scale(-1,1);c.drawImage(source,w-dx-dw,dy,dw,dh)}
-    else c.drawImage(source,dx,dy,dw,dh);c.restore();
-  }
-
-  function render(ts=0){
-    raf=requestAnimationFrame(render);if(video.readyState<2||ts-last<30)return;last=ts;
-    const w=view.width,h=view.height;ctx.clearRect(0,0,w,h);ctx.save();
-    ctx.filter=filters[filter]+(effect==='blur'?' blur(5px)':'');cover(ctx,video,w,h,facing==='user');ctx.restore();
-    if(effect==='fisheye')fisheye(w,h);if(effect==='light')lightLeak(w,h,ts);
-    if(effect==='vhs')vhs(w,h,ts);if(effect==='glitch')glitch(w,h,ts);
-  }
-
-  function copyCanvas(){
-    const c=document.createElement('canvas');c.width=view.width;c.height=view.height;c.getContext('2d').drawImage(view,0,0);return c;
-  }
-  function fisheye(w,h){
-    const t=copyCanvas();ctx.clearRect(0,0,w,h);const n=70;
-    for(let i=0;i<n;i++){const sy=i*h/n,sh=h/n+1,yn=i/(n-1)*2-1,b=1+.27*(1-yn*yn),dw=w*b;
-      ctx.drawImage(t,0,sy,w,sh,(w-dw)/2,sy,dw,sh)}
-  }
-  function lightLeak(w,h,ts){
-    const x=(Math.sin(ts/850)+1)/2*w,g=ctx.createRadialGradient(x,h*.2,0,x,h*.2,w*.7);
-    g.addColorStop(0,'rgba(255,90,145,.34)');g.addColorStop(.35,'rgba(255,210,120,.17)');
-    g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)
-  }
-  function vhs(w,h,ts){
-    ctx.save();ctx.globalAlpha=.14;ctx.fillStyle='#fff';
-    for(let y=(ts/10)%10;y<h;y+=10)ctx.fillRect(0,y,w,2);ctx.restore()
-  }
-  function glitch(w,h,ts){
-    if(Math.floor(ts/120)%4!==0)return;const t=copyCanvas();
-    for(let i=0;i<7;i++){const y=Math.random()*h,sh=5+Math.random()*24,x=(Math.random()-.5)*35;
-      ctx.drawImage(t,0,y,w,sh,x,y,w,sh)}
-  }
-
-  function rounded(c,x,y,w,h,r){
-    c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
-    c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()
-  }
-  function drawFrame(c,w,h,type){
-    c.clearRect(0,0,w,h);const s=Math.min(w,h);c.save();c.lineJoin='round';
-    if(type==='pink'){
-      c.strokeStyle='#ff9db9';c.lineWidth=s*.026;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.05);c.stroke();
-      c.fillStyle='rgba(255,225,235,.84)';c.fillRect(0,h-s*.13,w,s*.13);
-      c.fillStyle='#b94f72';c.font=`700 ${s*.045}px sans-serif`;c.textAlign='center';c.fillText('오늘도 예뻐 ♡',w/2,h-s*.045)
-    }
-    if(type==='flower'){c.strokeStyle='#c9e5c1';c.lineWidth=s*.03;rounded(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();c.font=`${s*.09}px serif`;c.fillText('🌼',s*.04,s*.12);c.fillText('🌸',w-s*.15,h-s*.04)}
-    if(type==='cat'){c.strokeStyle='#cbb8eb';c.lineWidth=s*.03;rounded(c,s*.02,s*.02,w-s*.04,h-s*.04,s*.04);c.stroke();c.font=`${s*.1}px serif`;c.fillText('🐱',s*.04,h-s*.04);c.fillText('🎀',w-s*.16,s*.13)}
-    if(type==='dark'){c.strokeStyle='#111';c.lineWidth=s*.05;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.03);c.stroke();c.font=`${s*.08}px serif`;c.fillText('💗',s*.06,s*.13);c.fillText('💗',w-s*.16,s*.13)}
-    if(type==='film'){c.strokeStyle='#111';c.lineWidth=s*.055;rounded(c,s*.025,s*.025,w-s*.05,h-s*.05,s*.02);c.stroke();c.fillStyle='#fff';for(let x=s*.07;x<w-s*.08;x+=s*.09){c.fillRect(x,s*.015,s*.045,s*.04);c.fillRect(x,h-s*.055,s*.045,s*.04)}}
-    c.restore()
-  }
-
-  function renderSingleFrame(){
-    if(video.readyState<2 || !video.videoWidth || !video.videoHeight){
-      throw new Error('Frame kamera belum siap.');
-    }
-    const w=view.width,h=view.height;
-    ctx.clearRect(0,0,w,h);
-    ctx.save();
-    ctx.filter=filters[filter]+(effect==='blur'?' blur(5px)':'');
-    cover(ctx,video,w,h,facing==='user');
-    ctx.restore();
-    if(effect==='fisheye')fisheye(w,h);
-    if(effect==='light')lightLeak(w,h,performance.now());
-    if(effect==='vhs')vhs(w,h,performance.now());
-    if(effect==='glitch')glitch(w,h,performance.now());
-  }
-
-  async function capture(){
-    if(!stream){setStatus('Aktifkan kamera terlebih dahulu.','error');return}
-    if(timer){for(let i=timer;i>0;i--){countdown.textContent=i;countdown.classList.add('show');await new Promise(r=>setTimeout(r,1000))}countdown.classList.remove('show')}
-
-    try{
-      // Ambil frame langsung dari video saat tombol ditekan.
-      renderSingleFrame();
-      await new Promise(r=>requestAnimationFrame(r));
-
-      const out=document.createElement('canvas');
-      out.width=view.width;
-      out.height=view.height;
-      const c=out.getContext('2d',{alpha:false});
-      c.fillStyle='#ffffff';
-      c.fillRect(0,0,out.width,out.height);
-      c.drawImage(view,0,0,out.width,out.height);
-      drawFrame(c,out.width,out.height,frame);
-
-      const dataUrl=out.toDataURL('image/jpeg',.92);
-
-      // Cegah menyimpan foto kosong/hitam karena stream belum siap.
-      if(!dataUrl || dataUrl.length<5000){
-        throw new Error('Hasil foto belum siap. Tunggu sebentar lalu coba lagi.');
-      }
-
-      addPhoto(dataUrl);
-      setStatus('Foto berhasil diambil. Tekan Simpan Drive.','success');
-    }catch(err){
-      console.error(err);
-      setStatus(err.message || 'Foto gagal diambil. Coba aktifkan ulang kamera.','error');
-    }
-  }
-
-  function addPhoto(dataUrl){
-    const card=document.createElement('article');card.className='photo';
-    card.innerHTML=`<img alt="Hasil foto"><div class="photo-actions"><button class="small download">Unduh</button><button class="small save">Simpan Drive</button></div>`;
-    card.querySelector('img').src=dataUrl;
-    card.querySelector('.download').onclick=()=>{const a=document.createElement('a');a.href=dataUrl;a.download='korean-photobooth-'+Date.now()+'.jpg';a.click()};
-    card.querySelector('.save').onclick=()=>uploadPhoto(dataUrl,card.querySelector('.save'));
-    gallery.prepend(card)
-  }
-
-  async function uploadPhoto(dataUrl,button){
-    if(!WEB_APP_URL.startsWith('https://script.google.com/macros/s/')||!WEB_APP_URL.endsWith('/exec')){
-      setStatus('Isi WEB_APP_URL di index.html menggunakan URL deployment Apps Script yang berakhiran /exec.','error');return
-    }
-    button.disabled=true;button.textContent='Mengupload...';setStatus('Mengirim foto ke Google Drive...','info');
-
-    const payload={
-      image:dataUrl,fileName:'korean-photobooth',source:location.hostname||'Local',
-      filter:filter,effect:effect,frame:frame
-    };
-
-    try{
-      /*
-       * mode no-cors paling stabil untuk frontend statis menuju Apps Script.
-       * Browser tidak dapat membaca responsnya, tetapi request tetap diproses.
-       */
-      await fetch(WEB_APP_URL,{
-        method:'POST',mode:'no-cors',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(payload)
-      });
-      button.textContent='Terkirim ✓';button.classList.add('uploaded');
-      setStatus('Foto telah dikirim. Periksa folder Google Drive dan sheet Riwayat Foto.','success');
-    }catch(e){
-      console.error(e);button.disabled=false;button.textContent='Coba Lagi';
-      setStatus('Upload gagal. Periksa internet dan URL Web App Apps Script.','error')
-    }
-  }
-
-  function select(container,selector,key,setter){
-    document.querySelector(container).addEventListener('click',e=>{
-      const b=e.target.closest(selector);if(!b)return;
-      document.querySelectorAll(selector).forEach(x=>x.classList.remove('active'));b.classList.add('active');setter(b.dataset[key])
-    })
-  }
-  select('#filters','[data-filter]','filter',v=>filter=v);
-  select('#effects','[data-effect]','effect',v=>effect=v);
-  select('#frames','[data-frame]','frame',v=>{frame=v;drawFrame(ox,overlay.width,overlay.height,frame)});
-
-  const startCameraButton=document.querySelector('#start');
-  startCameraButton.addEventListener('click',startCamera);
-
-  document.querySelector('#switch').onclick=async()=>{facing=facing==='user'?'environment':'user';await startCamera()};
-  document.querySelector('#zoom').onclick=e=>{zoom=zoom===1?1.5:zoom===1.5?2:1;e.currentTarget.textContent=zoom+'×'};
-  document.querySelector('#capture').onclick=capture;
-  document.querySelector('#timer').onclick=e=>{timer=timer===0?3:timer===3?5:0;e.currentTarget.textContent=timer?'⏱ '+timer+' detik':'⏱ Timer'};
-  document.querySelector('#galleryBtn').onclick=()=>gallery.scrollIntoView({behavior:'smooth',block:'start'});
-
-  function setActiveNav(name){
-    document.querySelectorAll('[data-nav]').forEach(btn=>btn.classList.toggle('active',btn.dataset.nav===name));
-  }
-
-  function printLatestPhoto(){
-    const image=gallery.querySelector('.photo img');
-    if(!image){setStatus('Belum ada foto untuk dicetak. Ambil foto terlebih dahulu.','error');return}
-    const win=window.open('','_blank','width=900,height=700');
-    if(!win){setStatus('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.','error');return}
-    win.document.write(`<!doctype html><html><head><title>Cetak Foto</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fff}img{max-width:95vw;max-height:95vh;object-fit:contain}@media print{body{display:block}img{width:100%;max-width:none;max-height:none}}</style></head><body><img src="${image.src}" onload="setTimeout(()=>window.print(),250)"></body></html>`);
-    win.document.close();
-  }
-
-  document.querySelector('#bottomNav').addEventListener('click',async e=>{
-    const btn=e.target.closest('[data-nav]');if(!btn)return;
-    const action=btn.dataset.nav;setActiveNav(action);
-    if(action==='home') document.querySelector('.brand').scrollIntoView({behavior:'smooth',block:'start'});
-    if(action==='sticker') document.querySelector('#stickerSection').scrollIntoView({behavior:'smooth',block:'start'});
-    if(action==='capture'){
-      document.querySelector('#homeSection').scrollIntoView({behavior:'smooth',block:'center'});
-      if(!stream){setStatus('Aktifkan kamera terlebih dahulu.','info');permission.classList.remove('hide')}
-      else await capture();
-    }
-    if(action==='print') printLatestPhoto();
-    if(action==='history'){
-      if(!gallery.children.length)setStatus('Riwayat masih kosong. Ambil foto terlebih dahulu.','info');
-      gallery.scrollIntoView({behavior:'smooth',block:'start'});
-    }
-  });
-
-  addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();
-</script>
 </body>
 </html>
